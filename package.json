@@ -1,0 +1,16 @@
+{
+  "name": "RPGMaker Save Editor",
+  "version": "1.0.0",
+  "description": "Save file editor for RPGMaker games",
+  "main": "js/main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "jest"
+  },
+  "author": "Nathan Baker",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^16.0.5",
+    "jest": "^27.4.5"
+  }
+}

@@ -1,0 +1,32 @@
+div.dropzone {
+  background-color: green;
+}
+
+p.droptext {
+  text-align: center;
+  color: white;
+  background-color: inherit;
+}
+
+p.label {
+  text-align: right;
+}
+
+div.content {
+  width: 90%;
+  text-align: left;
+  display: grid;
+}
+
+div.section-content {
+  width: 100%;
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: repeat(auto-fit, 300px);
+}
+
+div.item {
+  display: grid;
+  grid-gap: 10px;
+  grid-template-columns: 150px 150px;
+}
