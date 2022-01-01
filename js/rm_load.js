@@ -81,15 +81,19 @@ function get_context(file_path) {
   }
 
   // Load the context
-  let items = path.join(datadir, 'Items.json');
-  let armors = path.join(datadir, 'Armors.json');
+  let context_files = {
+    items: path.join(datadir, 'Items.json'),
+    armors: path.join(datadir, 'Armors.json'),
+    weapons: path.join(datadir, 'Weapons.json'),
+    variables: path.join(datadir, 'System.json')
+  };
 
-  if (fs.existsSync(items)) {
-    context['items'] = fs.readFileSync(items, { encoding: 'utf-8' });
-  }
-  if (fs.existsSync(armors)) {
-    context['armors'] = fs.readFileSync(armors, { encoding: 'utf-8' });
-  }
+  Object.entries(context_files).forEach((entry) => {
+    [key, filepath] = entry;
+    if (fs.existsSync(filepath)) {
+      context[key] = fs.readFileSync(filepath, { encoding: 'utf-8' });
+    }
+  });
 
   return context;
 }

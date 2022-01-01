@@ -8,13 +8,13 @@ function set_text(selector, text) {
 }
 
 /**
- * One item within an inventory section.
- * This type of item is for objects associated with a quantity.
+ * One item within a section.
+ * This type of item is for objects associated with a single value.
  *
  * The item owns the ability to update its value by reading from the DOM and
  * then writing to the JSON object representing the savefile.
  */
-class inventory_item
+class value_item
 {
   constructor(owner, field, label) {
     this.curr_val = owner[field];
@@ -209,6 +209,63 @@ function build_attribute_context() {
 }
 
 /**
+ * Loads one set of value_items from the json.
+ *
+ * RPGM tends to store related values in maps. This is for things like inventory
+ * sections. This is a helper function to read these name, value pairs and load
+ * them as sections in the section array.
+ */
+function load_section(name, json_parent, section_arr, ctx) {
+  let section_obj = new section(name);
+
+  if (Object.entries(json_parent).length > 0) {
+    Object.entries(json_parent).forEach(entry => {
+      const [id, quantity] = entry;
+
+      // Perform context lookup, if available
+      let name = String(id);
+      if (ctx[id]) {
+        name = ctx[id].name;
+      }
+
+      // Create the item in the section
+      section_obj.add_item(new value_item(json_parent, id, name));
+    });
+    section_arr.push(section_obj);
+  }
+}
+
+/**
+ * RPGM treats some things (like the internal variables) differently
+ * from others (like inventory items). This is annoying, but whattaya
+ * gonna do?
+ *
+ * This function is almost the same as the above, with two differences:
+ *   1. It iterates over an array instead of object entries
+ *   2. It ignores entries whose value is null
+ */
+function load_array_section(name, json_parent, section_arr, ctx) {
+  let section_obj = new section(name);
+
+  if (json_parent.length > 0) {
+    json_parent.forEach((value, idx) => {
+      if (value) {
+        console.log("value, idx: " + value + ", " + idx);
+        console.log('ctx[idx] = ' + ctx[idx]);
+        // Perform context lookup, if available
+        let name = String(idx);
+        if (ctx[idx]) {
+          name = ctx[idx];
+        }
+        // Create the item in the section
+        section_obj.add_item(new value_item(json_parent, idx, name));
+      }
+    });
+    section_arr.push(section_obj);
+  }
+}
+
+/**
  * Build the sections for the editor.
  * This function handles the semantic section building, while the section and
  * item classes handle building the actual UI.
@@ -217,9 +274,9 @@ function build_sections(json, context) {
   let sections = [];
   if ('party' in json) {
     // Common section
-    let common = new section("Common");
-    common.add_item(new inventory_item(json['party'], '_gold', 'Gold'));
-    common.add_item(new inventory_item(json['party'], '_steps', 'Steps'));
+    let common = new section('Common');
+    common.add_item(new value_item(json['party'], '_gold', 'Gold'));
+    common.add_item(new value_item(json['party'], '_steps', 'Steps'));
     sections.push(common);
 
     // Character section
@@ -228,7 +285,7 @@ function build_sections(json, context) {
     //       than defined in the game data. I don't know if the game can
     //       change the definition of these fields, but they are hard-coded
     //       at https://dev.azure.com/je-can-code/RPG%20Maker/_git/rmmz?path=/test-bed/js/rmmz_objects.js&version=GC865a2d06c3b3459496ec380577156ea8ddfb511e&line=2402&lineEnd=2403&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
-    let party = new section("Characters");
+    let party = new section('Characters');
       // Build the character sections for every character in the party
     json['party']['_actors'].forEach((actor_idx) => {
       let party_ctx = build_attribute_context(); // Performs the mapping described above
@@ -237,45 +294,37 @@ function build_sections(json, context) {
     sections.push(party);
 
     // Item section
-    let inventory = new section("Inventory");
-
-      // Parse context JSON, if available
     let item_ctx = {};
     if (context['items']) {
       item_ctx = JSON.parse(context['items']);
     }
+    load_section('Items', json['party']['_items'], sections, item_ctx);
 
-    if (Object.entries(json['party']['_items']).length > 0) {
-      Object.entries(json['party']['_items']).forEach(entry => {
-        const [id, quantity] = entry;
-        let name = String(id);
-        if (item_ctx[id]) {
-          name = item_ctx[id].name;
-        }
-        inventory.add_item(new inventory_item(json['party']['_items'], id, name));
-      });
-      sections.push(inventory);
+    // Weapon section
+    let weapon_ctx = {};
+    if (context['weapons']) {
+      weapon_ctx = JSON.parse(context['weapons']);
     }
+    load_section('Weapons', json['party']['_weapons'], sections, weapon_ctx);
 
     // Armor section
-    let armor = new section("Armor");
-
-    let armor_ctx = {}
+    let armor_ctx = {};
     if (context['armors']) {
       armor_ctx = JSON.parse(context['armors']);
     }
+    load_section('Armor', json['party']['_armors'], sections, armor_ctx);
+  }
 
-    if (Object.entries(json['party']['_armors']).length > 0) {
-      Object.entries(json['party']['_armors']).forEach(entry => {
-        const [id, quantity] = entry;
-        let name = String(id);
-        if (armor_ctx[id]) {
-          name = armor_ctx[id].name;
-        }
-        armor.add_item(new inventory_item(json['party']['_armors'], id, name));
-      });
-      sections.push(armor);
+  // Quests section
+
+  // Variables section
+  if ('variables' in json) {
+    let var_ctx = {};
+    if (context['variables']) {
+      let var_json = JSON.parse(context['variables']);
+      var_ctx = var_json.variables;
     }
+    load_array_section('Variables', json['variables']['_data'], sections, var_ctx);
   }
 
   return sections;
