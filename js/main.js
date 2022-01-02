@@ -5,8 +5,8 @@ const rm_loader = require('./rm_load.js');
 // Create the UI
 function createWindow () {
   const mainwin = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 1200,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }

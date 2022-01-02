@@ -12,21 +12,42 @@ p.label {
   text-align: right;
 }
 
+.character-name {
+  text-align: center;
+}
+
 div.content {
-  width: 90%;
   text-align: left;
   display: grid;
 }
 
+div.section {
+
+}
+
 div.section-content {
-  width: 100%;
   display: grid;
-  grid-gap: 10px;
   grid-template-columns: repeat(auto-fit, 300px);
+  grid-row-gap: 5px;
+}
+
+div.character-content {
+  grid-template-columns: repeat(auto-fit, 175px);
 }
 
 div.item {
   display: grid;
-  grid-gap: 10px;
+  grid-column-gap: 10px;
   grid-template-columns: 150px 150px;
+  grid-auto-rows: 2em;
+  align-items: center;
+}
+
+div.character-item {
+  /* Override column sizes from item above */
+  grid-template-columns: 100px 75px;
+}
+
+input.value {
+  line-height: 2em;
 }

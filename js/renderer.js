@@ -74,7 +74,8 @@ class character_item
 
   create_DOM() {
     let parent = document.createElement('div');
-    parent.classList.add('character-item');
+    parent.classList.add('section-content');
+    parent.classList.add('character-content');
     let header = document.createElement('h3');
     header.classList.add('character-name');
     header.textContent = this.actor._name;
@@ -85,6 +86,7 @@ class character_item
       let [idx, value] = entry;
       let subvalue = document.createElement('div');
       subvalue.classList.add('item');
+      subvalue.classList.add('character-item');
 
       let sublabel = document.createElement('p');
       sublabel.classList.add('label');
@@ -106,6 +108,7 @@ class character_item
     this.ctx.static.forEach((value, idx) => {
       let subvalue = document.createElement('div');
       subvalue.classList.add('item');
+      subvalue.classList.add('character-item');
 
       let sublabel = document.createElement('p');
       sublabel.classList.add('label');
@@ -250,8 +253,6 @@ function load_array_section(name, json_parent, section_arr, ctx) {
   if (json_parent.length > 0) {
     json_parent.forEach((value, idx) => {
       if (value) {
-        console.log("value, idx: " + value + ", " + idx);
-        console.log('ctx[idx] = ' + ctx[idx]);
         // Perform context lookup, if available
         let name = String(idx);
         if (ctx[idx]) {
