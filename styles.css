@@ -16,6 +16,22 @@ p.label {
   text-align: center;
 }
 
+.section-header {
+
+}
+
+.expanded::before {
+  content: '\25BC';
+  padding-right: 10px;
+  padding-left: 0px;
+}
+
+.collapsed::before {
+  content: '\25B8';
+  padding-right: 10px;
+  padding-left: 0px;
+}
+
 div.content {
   text-align: left;
   display: grid;
@@ -29,6 +45,10 @@ div.section-content {
   display: grid;
   grid-template-columns: repeat(auto-fit, 300px);
   grid-row-gap: 5px;
+}
+
+div.section-hidden {
+  display: none;
 }
 
 div.character-content {

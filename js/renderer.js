@@ -164,9 +164,24 @@ class section
     let section_div = document.createElement('div');
     section_div.classList.add('section');
     let header = document.createElement('h2');
+    header.classList.add('section-header');
+    header.classList.add('expanded');
     let section_content = document.createElement('div');
     section_content.classList.add('section-content');
     header.textContent = this.name;
+
+    // Enable expand / collapse behavior
+    header.onclick = function(event) {
+      if (event.target.classList.contains('expanded')) {
+        event.target.classList.remove('expanded');
+        event.target.classList.add('collapsed');
+        section_content.classList.add('section-hidden');
+      } else {
+        event.target.classList.add('expanded');
+        event.target.classList.remove('collapsed');
+        section_content.classList.remove('section-hidden');
+      }
+    };
 
     section_div.appendChild(header);
     section_div.appendChild(section_content);
