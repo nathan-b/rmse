@@ -17,7 +17,7 @@ function createWindow () {
 }
 
 // Message handlers
-ipcMain.handle('load_rm_file', async (event, file_path) => {
+ipcMain.handle('load_file', async (event, file_path) => {
   return rm_loader.load(file_path);
 });
 
@@ -26,7 +26,6 @@ ipcMain.on('get_version', (event) => {
 });
 
 ipcMain.handle('save_file', async (event, file_path, json_str, rm_root) => {
-  console.log('Save file "' + file_path + '"');
   if (file_path.length === 0) {
     // Empty string => Open Save As dialog
     file_path = dialog.showSaveDialogSync({
@@ -38,6 +37,16 @@ ipcMain.handle('save_file', async (event, file_path, json_str, rm_root) => {
     return false;
   }
   return await rm_loader.save(file_path, json_str, rm_root);
+});
+
+ipcMain.handle('open_file', async (event) => {
+  [file_path] = dialog.showOpenDialogSync({
+    title: 'Select a file to open',
+    properties: ['openFile']
+  });
+  if (file_path) {
+    return rm_loader.load(file_path);
+  }
 });
 
 

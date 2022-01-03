@@ -282,6 +282,26 @@ function load_array_section(name, json_parent, section_arr, ctx) {
 }
 
 /**
+ * This function is only necessary because older version of RPGMaker do
+ * strange and awkward things with the JSON.
+ */
+function get_rm_arr(obj, field) {
+  let arr = obj[field];
+
+  if (Array.isArray(arr)) {
+    return arr;
+  }
+
+  arr = arr['@a'];
+
+  if (Array.isArray(arr)) {
+    return arr;
+  }
+
+  return null;
+}
+
+/**
  * Build the sections for the editor.
  * This function handles the semantic section building, while the section and
  * item classes handle building the actual UI.
@@ -303,9 +323,11 @@ function build_sections(json, context) {
     //       at https://dev.azure.com/je-can-code/RPG%20Maker/_git/rmmz?path=/test-bed/js/rmmz_objects.js&version=GC865a2d06c3b3459496ec380577156ea8ddfb511e&line=2402&lineEnd=2403&lineStartColumn=1&lineEndColumn=1&lineStyle=plain&_a=contents
     let party = new section('Characters');
       // Build the character sections for every character in the party
-    json['party']['_actors'].forEach((actor_idx) => {
+    let party_actors = get_rm_arr(json['party'], '_actors');
+    party_actors.forEach((actor_idx) => {
       let party_ctx = build_attribute_context(); // Performs the mapping described above
-      party.add_item(new character_item(json['actors']['_data'][actor_idx], party_ctx));
+      let actor_arr = get_rm_arr(json['actors'], '_data');
+      party.add_item(new character_item(actor_arr[actor_idx], party_ctx));
     });
     sections.push(party);
 
@@ -338,7 +360,7 @@ function build_sections(json, context) {
       let var_json = JSON.parse(context['variables']);
       var_ctx = var_json.variables;
     }
-    load_array_section('Variables', json['variables']['_data'], sections, var_ctx);
+    load_array_section('Variables', get_rm_arr(json['variables'], '_data'), sections, var_ctx);
   }
 
   return sections;
@@ -410,6 +432,11 @@ function handle_save(outfile, json, rm_root, sections) {
  */
 function handle_file_load(filename, context_obj) {
   set_text('status', 'Handling file load for ' + filename);
+
+  if (!context_obj) {
+    console.error('File load failed for ' + filename);
+    return;
+  }
   let fdata = {};
   let json_txt = context_obj['json_txt'];
   fdata['filename'] = filename;
@@ -423,6 +450,7 @@ function handle_file_load(filename, context_obj) {
   sections.forEach((section) => { content_div.appendChild(section.create_DOM()); });
 
   build_palette(sections, fdata);
+  hide_dropzone();
 }
 
 /*
@@ -445,6 +473,11 @@ function handle_file_load(filename, context_obj) {
  * "Use electron" they said. "It will make things easy" they said...
  */
 
+function hide_dropzone() {
+  const dz = document.getElementById('receive_file');
+  dz.classList.add('dropzone-hidden');
+}
+
 // Handlers for drag 'n' drop
 function drop_handler(ev) {
   ev.preventDefault();
@@ -452,7 +485,7 @@ function drop_handler(ev) {
     if (ev.dataTransfer.items[i].kind === 'file') {
       let file = ev.dataTransfer.items[i].getAsFile();
       set_text('status', 'Loading file ' + file.path);
-      window.ipc_bridge.load_json(file.path, handle_file_load);
+      window.ipc_bridge.load_file(file.path, handle_file_load);
     }
   }
 }
@@ -460,12 +493,16 @@ function drag_handler(ev) {
   ev.preventDefault();
   ev.stopPropagation();
 }
+function click_handler(ev) {
+  window.ipc_bridge.open_file(handle_file_load);
+}
 
 window.addEventListener('DOMContentLoaded', (event) => {
   // Enable drag 'n' drop
   let dropzone = document.getElementById('receive_file');
   dropzone.addEventListener('drop', drop_handler);
   dropzone.addEventListener('dragover', drag_handler);
+  dropzone.addEventListener('click', click_handler);
 
   // Write the footer
   const version = window.ipc_bridge.version();

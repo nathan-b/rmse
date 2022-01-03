@@ -39,7 +39,8 @@ function get_rm_root(curr_path) {
   // I'm not super familiar with RPGMaker so I don't know if this function is
   // 100% reliable. I also don't know if this will work on Windows with its
   // weird paths. YOLO
-  if (fs.existsSync(path.join(curr_path, 'Game'))) {
+  if (fs.existsSync(path.join(curr_path, 'Game')) ||
+      fs.existsSync(path.join(curr_path, 'nw'))) {
     // This is currently the rm root!
     return curr_path;
   }
@@ -85,7 +86,7 @@ function get_context(file_path) {
   let maindir = path.dirname(savedir);
   let datadir = path.join(maindir, 'data');
   if (!fs.existsSync(datadir)) {
-    console.log('Could not find data dir for ' + file_path);
+    console.error('Could not find data dir for ' + file_path);
     return {};
   }
 
@@ -109,10 +110,16 @@ function get_context(file_path) {
 
 function load(file_path) {
   let rm_root = get_rm_root(file_path);
+  if (rm_root === null) {
+    console.error('Could not find RPGMaker root dir...aborting');
+    return null;
+  }
   let coder = build_coder(rm_root);
   let json = coder.decode(file_path);
   let context = get_context(file_path);
-  
+
+  fs.writeFileSync(path.join(path.dirname(file_path), 'out.json'), json);
+
   context['json_txt'] = json;
   context['rm_root'] = rm_root;
   return context;

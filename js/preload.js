@@ -3,9 +3,14 @@ const path = require('path');
 
 // Set up APIs for sandboxed environment
 contextBridge.exposeInMainWorld('ipc_bridge', {
-  load_json: (file_path, callback) => {
-    ipcRenderer.invoke('load_rm_file', file_path).then((result) => {
+  load_file: (file_path, callback) => {
+    ipcRenderer.invoke('load_file', file_path).then((result) => {
       callback(path.basename(file_path), result);
+    });
+  },
+  open_file: (callback) => {
+    ipcRenderer.invoke('open_file').then((result) => {
+      callback(path.basename(result.savefile), result);
     });
   },
   save_file: (file_path, json_str, rm_root, callback) => {

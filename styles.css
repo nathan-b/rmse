@@ -2,6 +2,10 @@ div.dropzone {
   background-color: green;
 }
 
+div.dropzone-hidden {
+  display: none;
+}
+
 p.droptext {
   text-align: center;
   color: white;
@@ -14,7 +18,7 @@ p.label {
 
 div.palette {
   position: fixed;
-  bottom: 10px;
+  bottom: 5px;
   right: 30px;
   z-index: 99;
   border: 2px solid lightblue;
@@ -24,6 +28,16 @@ div.palette {
   display: grid;
   grid-auto-flow: column;
   grid-gap: 10px;
+}
+
+div.status {
+  position: fixed;
+  bottom: 5px;
+  left: 10px;
+  z-index: 99;
+  border: 2px solid lightblue;
+  border-radius: 5px;
+  background-color: white;
 }
 
 button.palette-button {
@@ -71,6 +85,7 @@ div.section-hidden {
 
 div.character-content {
   grid-template-columns: repeat(auto-fit, 175px);
+  grid-row-gap: 0px;
 }
 
 div.item {
