@@ -331,8 +331,6 @@ function build_sections(json, context) {
     load_section('Armor', json['party']['_armors'], sections, armor_ctx);
   }
 
-  // Quests section
-
   // Variables section
   if ('variables' in json) {
     let var_ctx = {};
@@ -346,17 +344,106 @@ function build_sections(json, context) {
   return sections;
 }
 
+/**
+ * The "palette" is the floating div containing the buttons the user can use to
+ * (for example) save changes and otherwise interact with the system.
+ *
+ * Takes a context object structured like so:
+ * {
+ *   'filename' => Base name of the file (for printing)
+ *   'savefile' => Full path to the save file
+ *   'rm_root'  => Root RPGMaker directory path
+ *   'object'   => Parsed JSON object
+ */
+function build_palette(sections, fdata) {
+  let palette = document.getElementById('palette');
+
+  let savebtn = document.createElement('button');
+  savebtn.textContent = 'Overwrite ' + fdata['filename'];
+  savebtn.classList.add('palette-button');
+  savebtn.onclick = (event) => {
+    handle_save(fdata['savefile'], fdata['object'], fdata['rm_root'], sections);
+  }
+
+  let saveasbtn = document.createElement('button');
+  saveasbtn.textContent = 'Save as...';
+  saveasbtn.classList.add('palette-button');
+  saveasbtn.onclick = (event) => {
+    handle_save('', fdata['object'], fdata['rm_root'], sections);
+  }
+
+  palette.appendChild(savebtn);
+  palette.appendChild(saveasbtn);
+}
+
+function handle_save(outfile, json, rm_root, sections) {
+  set_text('status', 'Saving ' + outfile);
+  // This will update the json object to contain the new values
+  sections.forEach((section) => { section.update_values() });
+
+  // Now save the json
+  window.ipc_bridge.save_file(outfile, JSON.stringify(json), rm_root, (status) => {
+    if (status) {
+      set_text('status', 'Saved ' + outfile);
+    } else {
+      set_text('status', 'Error saving ' + outfile);
+    }
+  });
+}
+
+/**
+ * Parse the JSON data, load each section, and create the DOM.
+ *
+ * Receives a context object structured like so:
+ * {
+ *   'savefile' => Full path to the save file
+ *   'rm_root'  => Root RPGMaker directory path
+ *   'json_txt' => The decoded but unparsed JSON from the save file
+ *   <section contexts> => Things like item and variable definitions
+ *
+ * Produces a context object structured like so:
+ * {
+ *   'filename' => Base name of the file (for printing)
+ *   'savefile' => Full path to the save file
+ *   'rm_root'  => Root RPGMaker directory path
+ *   'object'   => Parsed JSON object
+ */
 function handle_file_load(filename, context_obj) {
   set_text('status', 'Handling file load for ' + filename);
+  let fdata = {};
+  let json_txt = context_obj['json_txt'];
+  fdata['filename'] = filename;
+  fdata['savefile'] = context_obj['savefile'];
+  fdata['rm_root'] = context_obj['rm_root'];
+  fdata['object'] = JSON.parse(json_txt);
 
-  let json_txt = context_obj['savefile'];
-  let json = JSON.parse(json_txt);
-  let sections = build_sections(json, context_obj);
-
+  let sections = build_sections(fdata['object'], context_obj);
   const content_div = document.getElementById('content');
 
   sections.forEach((section) => { content_div.appendChild(section.create_DOM()); });
+
+  build_palette(sections, fdata);
 }
+
+/*
+ * Code flows:
+ * - File load
+ *   drop_handler (renderer.js)          => Get the file path
+ *    ipc_bridge.load_json (preload.js)  => Send file path to IPC
+ *     load_rm_file (main.js)            => Call into rm_load library
+ *      rm_loader.load (rm_load.js)      => Read and decode file, return ctx obj
+ *    handle_file_load (renderer.js)     => Build the sections, create DOM
+ *
+ * - File save
+ *   onclick (build_palette) (renderer.js)
+ *    handle_save (renderer.js)          => Update JSON
+ *     ipc_bridge.save_file (preload.js) => Send JSON to IPC
+ *      save_file (main.js)              => Call into rm_load library
+ *       rm_loader.save (rm_load.js)     => Encode and write the file
+ *     callback (handle_save) (renderer.js) => Write status
+ *
+ * "Use electron" they said. "It will make things easy" they said...
+ */
 
 // Handlers for drag 'n' drop
 function drop_handler(ev) {
@@ -365,7 +452,7 @@ function drop_handler(ev) {
     if (ev.dataTransfer.items[i].kind === 'file') {
       let file = ev.dataTransfer.items[i].getAsFile();
       set_text('status', 'Loading file ' + file.path);
-      window.rm_loader.load_json(file.path, handle_file_load);
+      window.ipc_bridge.load_json(file.path, handle_file_load);
     }
   }
 }
@@ -379,4 +466,9 @@ window.addEventListener('DOMContentLoaded', (event) => {
   let dropzone = document.getElementById('receive_file');
   dropzone.addEventListener('drop', drop_handler);
   dropzone.addEventListener('dragover', drag_handler);
+
+  // Write the footer
+  const version = window.ipc_bridge.version();
+  let footer = document.getElementById('footer');
+  footer.textContent = 'RPGMaker Save Editor v' + version;
 });

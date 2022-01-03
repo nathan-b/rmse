@@ -1,7 +1,8 @@
 const fs = require('fs');
+const fsprom = fs.promises;
 const path = require('path');
 
-class pako_decoder
+class pako_coder
 {
   constructor(pako_path) {
     this.pako = require(pako_path);
@@ -12,9 +13,13 @@ class pako_decoder
     const json = this.pako.inflate(zipdata, { to: "string" });
     return json;
   }
+
+  encode(json_str) {
+    return this.pako.deflate(json_str, { to: "string", level: 1 });
+  }
 }
 
-class lz_decoder {
+class lz_coder {
   constructor(lz_path) {
     this.lzstring = require(lz_path);
   }
@@ -23,6 +28,10 @@ class lz_decoder {
     const zipdata = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
     const json = this.lzstring.decompressFromBase64(zipdata);
     return json;
+  }
+
+  encode(json_str) {
+    return this.lzstring.compressToBase64(json_str);
   }
 }
 
@@ -44,20 +53,20 @@ function get_rm_root(curr_path) {
   return get_rm_root(updir);
 }
 
-function build_decoder(rm_root) {
+function build_coder(rm_root) {
   let pakopath = path.join(rm_root, 'js', 'libs', 'pako.min.js');
   let lzpath = path.join(rm_root, 'www', 'js', 'libs', 'lz-string.js');
-  let decoder = null;
+  let coder = null;
 
   if (fs.existsSync(pakopath)) {
     // Build pako decoder
-    decoder = new pako_decoder(pakopath);
+    coder = new pako_coder(pakopath);
   } else if (fs.existsSync(lzpath)) {
     // Build lz-string decoder
-    decoder = new lz_decoder(lzpath);
+    coder = new lz_coder(lzpath);
   }
 
-  return decoder;
+  return coder;
 }
 
 /**
@@ -69,7 +78,7 @@ function build_decoder(rm_root) {
  * savefile data.
  */
 function get_context(file_path) {
-  let context = {};
+  let context = {savefile: file_path};
 
   // Find the data directory
   let savedir = path.dirname(file_path);
@@ -100,13 +109,28 @@ function get_context(file_path) {
 
 function load(file_path) {
   let rm_root = get_rm_root(file_path);
-  let decoder = build_decoder(rm_root);
-
-  let json = decoder.decode(file_path);
+  let coder = build_coder(rm_root);
+  let json = coder.decode(file_path);
   let context = get_context(file_path);
-  context['savefile'] = json;
+  
+  context['json_txt'] = json;
+  context['rm_root'] = rm_root;
   return context;
 }
 
+async function save(file_path, json_str, rm_root) {
+  let coder = build_coder(rm_root);
+  let strdata = coder.encode(json_str);
+
+  try {
+    await fsprom.writeFile(file_path, strdata);
+  } catch(err) {
+    console.log('Error saving file ' + file_path + ': ' + err);
+    return false;
+  }
+  return true;
+}
+
 exports.load = load;
+exports.save = save;
 exports.get_rm_root = get_rm_root
