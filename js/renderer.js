@@ -56,6 +56,10 @@ class value_item
     }
     this.jobj[this.field] = newval;
   }
+
+  reset_value() {
+    this.input_elem.value = this.curr_val;
+  }
 }
 
 /**
@@ -139,6 +143,17 @@ class character_item
       this.actor._paramPlus[idx] = Number(value['elem'].value);
     });
   }
+
+  reset_value() {
+    Object.entries(this.ctx.current).forEach((entry) => {
+      let [idx, value] = entry;
+      value['elem'].value = this.actor[idx];
+    });
+
+    this.ctx.static.forEach((value, idx) => {
+      value['elem'].value = this.actor._paramPlus[idx];
+    });
+  }
 }
 
 /**
@@ -192,6 +207,10 @@ class section
 
   update_values() {
     this.items.forEach((item) => { item.update_value(); });
+  }
+
+  reset_values() {
+    this.items.forEach((item) => { item.reset_value(); });
   }
 }
 
@@ -401,9 +420,17 @@ function build_palette(sections, fdata) {
     dump_json(JSON.stringify(fdata['object']), fdata['rm_root']);
   }
 
+  let resetbtn = document.createElement('button');
+  resetbtn.textContent = 'Revert all changes';
+  resetbtn.classList.add('palette-button');
+  resetbtn.onclick = (event) => {
+    sections.forEach((section) => { section.reset_values(); });
+  }
+
   palette.appendChild(savebtn);
   palette.appendChild(saveasbtn);
   palette.appendChild(jdumpbtn);
+  palette.appendChild(resetbtn);
 }
 
 function dump_json(obj, rm_root)
