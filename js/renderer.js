@@ -394,8 +394,27 @@ function build_palette(sections, fdata) {
     handle_save('', fdata['object'], fdata['rm_root'], sections);
   }
 
+  let jdumpbtn = document.createElement('button');
+  jdumpbtn.textContent = 'Dump raw JSON';
+  jdumpbtn.classList.add('palette-button');
+  jdumpbtn.onclick = (event) => {
+    dump_json(JSON.stringify(fdata['object']), fdata['rm_root']);
+  }
+
   palette.appendChild(savebtn);
   palette.appendChild(saveasbtn);
+  palette.appendChild(jdumpbtn);
+}
+
+function dump_json(obj, rm_root)
+{
+  window.ipc_bridge.dump_json(obj, rm_root, (status) => {
+    if (status.length > 0) {
+      set_text('status', 'Dumped raw JSON to ' + status);
+    } else {
+      set_text('status', 'Could not dump raw JSON!');
+    }
+  });
 }
 
 function handle_save(outfile, json, rm_root, sections) {

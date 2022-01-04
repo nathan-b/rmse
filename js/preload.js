@@ -18,6 +18,11 @@ contextBridge.exposeInMainWorld('ipc_bridge', {
       callback(result);
     });
   },
+  dump_json: (json_str, rm_root, callback) => {
+    ipcRenderer.invoke('dump_json', json_str, rm_root).then((result) => {
+      callback(result);
+    });
+  },
   version: () => {
     return ipcRenderer.sendSync('get_version');
   }

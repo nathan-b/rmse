@@ -2,7 +2,24 @@ const fs = require('fs');
 const fsprom = fs.promises;
 const path = require('path');
 
-class pako_coder
+class null_codec
+{
+  constructor(rm_root)
+  {
+    this.rm_root = rm_root;
+  }
+
+  decode(savefile_path) {
+    const json = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
+    return json;
+  }
+
+  encode(json_str) {
+    return json_str;
+  }
+}
+
+class pako_codec
 {
   constructor(pako_path) {
     this.pako = require(pako_path);
@@ -19,7 +36,7 @@ class pako_coder
   }
 }
 
-class lz_coder {
+class lz_codec {
   constructor(lz_path) {
     this.lzstring = require(lz_path);
   }
@@ -54,20 +71,22 @@ function get_rm_root(curr_path) {
   return get_rm_root(updir);
 }
 
-function build_coder(rm_root) {
+function build_codec(file_path, rm_root) {
   let pakopath = path.join(rm_root, 'js', 'libs', 'pako.min.js');
   let lzpath = path.join(rm_root, 'www', 'js', 'libs', 'lz-string.js');
-  let coder = null;
+  let codec = null;
 
-  if (fs.existsSync(pakopath)) {
-    // Build pako decoder
-    coder = new pako_coder(pakopath);
+  if (path.extname(file_path) == '.json') {
+    codec = new null_codec(rm_root);
+  } else if (fs.existsSync(pakopath)) {
+    // Build pako decodec
+    codec = new pako_codec(pakopath);
   } else if (fs.existsSync(lzpath)) {
-    // Build lz-string decoder
-    coder = new lz_coder(lzpath);
+    // Build lz-string decodec
+    codec = new lz_codec(lzpath);
   }
 
-  return coder;
+  return codec;
 }
 
 /**
@@ -112,13 +131,12 @@ function load(file_path) {
   let rm_root = get_rm_root(file_path);
   if (rm_root === null) {
     console.error('Could not find RPGMaker root dir...aborting');
+    // Could possibly prompt user?
     return null;
   }
-  let coder = build_coder(rm_root);
-  let json = coder.decode(file_path);
+  let codec = build_codec(file_path, rm_root);
+  let json = codec.decode(file_path);
   let context = get_context(file_path);
-
-  fs.writeFileSync(path.join(path.dirname(file_path), 'out.json'), json);
 
   context['json_txt'] = json;
   context['rm_root'] = rm_root;
@@ -126,8 +144,8 @@ function load(file_path) {
 }
 
 async function save(file_path, json_str, rm_root) {
-  let coder = build_coder(rm_root);
-  let strdata = coder.encode(json_str);
+  let codec = build_codec(file_path, rm_root);
+  let strdata = codec.encode(json_str);
 
   try {
     await fsprom.writeFile(file_path, strdata);

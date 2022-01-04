@@ -1,5 +1,6 @@
-const {app, BrowserWindow, ipcMain, dialog } = require('electron');
+const {app, BrowserWindow, ipcMain, dialog} = require('electron');
 const path = require('path');
+const fsprom = require('fs').promises;
 const rm_loader = require('./rm_load.js');
 
 // Create the UI
@@ -14,6 +15,13 @@ function createWindow () {
 
   mainwin.loadFile('index.html');
   mainwin.webContents.openDevTools();
+}
+
+function getWindow() {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    return null;
+  }
+  return BrowserWindow.getAllWindows()[0];
 }
 
 // Message handlers
@@ -40,13 +48,31 @@ ipcMain.handle('save_file', async (event, file_path, json_str, rm_root) => {
 });
 
 ipcMain.handle('open_file', async (event) => {
-  [file_path] = dialog.showOpenDialogSync({
+  [file_path] = dialog.showOpenDialogSync(getWindow(), {
     title: 'Select a file to open',
     properties: ['openFile']
   });
   if (file_path) {
     return rm_loader.load(file_path);
   }
+});
+
+ipcMain.handle('dump_json', async (event, json_str, rm_root) => {
+  const file_path = dialog.showSaveDialogSync(getWindow(), {
+    title: 'Select a location to save the raw JSON',
+    defaultPath: rm_root
+  });
+  if (!file_path) {
+    return '';
+  }
+
+  try {
+    await fsprom.writeFile(file_path, json_str);
+  } catch (err) {
+    console.error('Failed to write JSON file: ' + err);
+    return '';
+  }
+  return file_path;
 });
 
 
