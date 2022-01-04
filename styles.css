@@ -75,7 +75,7 @@ div.section {
 
 div.section-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 300px);
+  grid-template-columns: repeat(auto-fit, 320px);
   grid-row-gap: 5px;
 }
 

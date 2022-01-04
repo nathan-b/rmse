@@ -451,8 +451,8 @@ function handle_save(outfile, json, rm_root, sections) {
 
   // Now save the json
   window.ipc_bridge.save_file(outfile, JSON.stringify(json), rm_root, (status) => {
-    if (status) {
-      set_text('status', 'Saved ' + outfile);
+    if (status.length > 0) {
+      set_text('status', 'Saved ' + status);
     } else {
       set_text('status', 'Error saving ' + outfile);
     }

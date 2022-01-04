@@ -42,7 +42,7 @@ ipcMain.handle('save_file', async (event, file_path, json_str, rm_root) => {
     });
   }
   if (!file_path) {
-    return false;
+    return '';
   }
   return await rm_loader.save(file_path, json_str, rm_root);
 });

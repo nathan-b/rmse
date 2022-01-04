@@ -151,9 +151,9 @@ async function save(file_path, json_str, rm_root) {
     await fsprom.writeFile(file_path, strdata);
   } catch(err) {
     console.log('Error saving file ' + file_path + ': ' + err);
-    return false;
+    return '';
   }
-  return true;
+  return file_path;
 }
 
 exports.load = load;
