@@ -40,6 +40,10 @@ div.status {
   background-color: white;
 }
 
+div.extras {
+  padding-top: 5px;
+}
+
 button.palette-button {
 
 }

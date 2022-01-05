@@ -175,15 +175,20 @@ class section
     this.items.push(item);
   }
 
+  add_extras(extras_arr) {
+    this.extras = extras_arr;
+  }
+
   create_DOM() {
     let section_div = document.createElement('div');
     section_div.classList.add('section');
     let header = document.createElement('h2');
     header.classList.add('section-header');
     header.classList.add('expanded');
+    header.textContent = this.name;
     let section_content = document.createElement('div');
     section_content.classList.add('section-content');
-    header.textContent = this.name;
+    let extras_div = document.createElement('div');
 
     // Enable expand / collapse behavior
     header.onclick = function(event) {
@@ -191,16 +196,60 @@ class section
         event.target.classList.remove('expanded');
         event.target.classList.add('collapsed');
         section_content.classList.add('section-hidden');
+        extras_div.classList.add('section-hidden');
       } else {
         event.target.classList.add('expanded');
         event.target.classList.remove('collapsed');
         section_content.classList.remove('section-hidden');
+        extras_div.classList.remove('section-hidden');
       }
     };
 
     section_div.appendChild(header);
     section_div.appendChild(section_content);
     this.items.forEach((item) => { section_content.appendChild(item.create_DOM()); });
+
+    // Add dropdown for extra items, if desired
+    if (this.extras) {
+      extras_div.classList.add('extras');
+      // Add a label
+      let extras_label = document.createElement('p');
+      extras_label.classList.add('extras');
+      extras_label.textContent = 'Add to inventory: ';
+      extras_div.appendChild(extras_label);
+
+      // Create the dropdown list
+      let select_list = document.createElement('select');
+      select_list.classList.add('extras');
+
+      // Create and append the options
+      this.extras.forEach((extra) => {
+        let option = document.createElement('option');
+        option.context = extra;
+        option.text = extra.name;
+        select_list.appendChild(option);
+      });
+      extras_div.appendChild(select_list);
+
+      // Create the button
+      let btnadd = document.createElement('button');
+      btnadd.onclick = (event) => {
+        let val = select_list.options[select_list.selectedIndex].context;
+        // Add the item to the JSON object
+        val.obj[val.id] = 1;
+
+        // Create the new item
+        let item = new value_item(val.obj, val.id, val.name)
+        this.add_item(item);
+
+        // Add to the DOM
+        section_content.appendChild(item.create_DOM());
+      };
+      btnadd.textContent = 'Add item';
+      extras_div.appendChild(btnadd);
+
+      section_div.appendChild(extras_div);
+    }
 
     return section_div;
   }
@@ -252,7 +301,7 @@ function build_attribute_context() {
  * sections. This is a helper function to read these name, value pairs and load
  * them as sections in the section array.
  */
-function load_section(name, json_parent, section_arr, ctx) {
+function load_section(name, json_parent, section_arr, ctx, extras) {
   let section_obj = new section(name);
 
   if (Object.entries(json_parent).length > 0) {
@@ -268,6 +317,9 @@ function load_section(name, json_parent, section_arr, ctx) {
       // Create the item in the section
       section_obj.add_item(new value_item(json_parent, id, name));
     });
+    if (extras) {
+      section_obj.add_extras(extras);
+    }
     section_arr.push(section_obj);
   }
 }
@@ -301,6 +353,32 @@ function load_array_section(name, json_parent, section_arr, ctx) {
 }
 
 /**
+ * The party object only contains items which are currently in the inventory. As
+ * the user might reasonably want to add new items not currently owned, this
+ * function will produce a list of those new items.
+ *
+ * item_ctx is an array of items, while item_obj associates item IDs with
+ * quantities.
+ */
+function load_extra_items(item_obj, item_ctx) {
+  let extra_items = [];
+  item_ctx.forEach((item) => {
+    if (item &&
+        item['name'] &&
+        item['name'].length > 0 &&
+        item['name'][0] != '-' &&
+        !item_obj[item.id]) {
+          extra_items.push({
+            'name': item['name'],
+            'id': item['id'],
+            'obj': item_obj
+          });
+    }
+  });
+  return extra_items;
+}
+
+/**
  * This function is only necessary because older version of RPGMaker do
  * strange and awkward things with the JSON.
  */
@@ -318,6 +396,16 @@ function get_rm_arr(obj, field) {
   }
 
   return null;
+}
+
+function inventory_section(name, json_obj, context, sections) {
+  let ctx_obj = {};
+  let item_extras = null;
+  if (context) {
+    ctx_obj = JSON.parse(context);
+    item_extras = load_extra_items(json_obj, ctx_obj);
+  }
+  load_section(name, json_obj, sections, ctx_obj, item_extras);
 }
 
 /**
@@ -350,26 +438,10 @@ function build_sections(json, context) {
     });
     sections.push(party);
 
-    // Item section
-    let item_ctx = {};
-    if (context['items']) {
-      item_ctx = JSON.parse(context['items']);
-    }
-    load_section('Items', json['party']['_items'], sections, item_ctx);
-
-    // Weapon section
-    let weapon_ctx = {};
-    if (context['weapons']) {
-      weapon_ctx = JSON.parse(context['weapons']);
-    }
-    load_section('Weapons', json['party']['_weapons'], sections, weapon_ctx);
-
-    // Armor section
-    let armor_ctx = {};
-    if (context['armors']) {
-      armor_ctx = JSON.parse(context['armors']);
-    }
-    load_section('Armor', json['party']['_armors'], sections, armor_ctx);
+    // Inventory
+    inventory_section('Items', json['party']['_items'], context['items'], sections);
+    inventory_section('Weapons', json['party']['_weapons'], context['weapons'], sections);
+    inventory_section('Armor', json['party']['_armors'], context['armors'], sections);
   }
 
   // Variables section
