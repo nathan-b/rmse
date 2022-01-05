@@ -2,91 +2,99 @@ const fs = require('fs');
 const fsprom = fs.promises;
 const path = require('path');
 
-class null_codec
-{
-  constructor(rm_root)
-  {
-    this.rm_root = rm_root;
-  }
+class null_codec {
+	constructor(rm_root) {
+		this.rm_root = rm_root;
+	}
 
-  decode(savefile_path) {
-    const json = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
-    return json;
-  }
+	decode(savefile_path) {
+		const json = fs.readFileSync(savefile_path, {
+			encoding: 'utf-8'
+		});
+		return json;
+	}
 
-  encode(json_str) {
-    return json_str;
-  }
+	encode(json_str) {
+		return json_str;
+	}
 }
 
-class pako_codec
-{
-  constructor(pako_path) {
-    this.pako = require(pako_path);
-  }
+class pako_codec {
+	constructor(pako_path) {
+		this.pako = require(pako_path);
+	}
 
-  decode(savefile_path) {
-    const zipdata = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
-    const json = this.pako.inflate(zipdata, { to: "string" });
-    return json;
-  }
+	decode(savefile_path) {
+		const zipdata = fs.readFileSync(savefile_path, {
+			encoding: 'utf-8'
+		});
+		const json = this.pako.inflate(zipdata, {
+			to: "string"
+		});
+		return json;
+	}
 
-  encode(json_str) {
-    return this.pako.deflate(json_str, { to: "string", level: 1 });
-  }
+	encode(json_str) {
+		return this.pako.deflate(json_str, {
+			to: "string",
+			level: 1
+		});
+	}
 }
 
 class lz_codec {
-  constructor(lz_path) {
-    this.lzstring = require(lz_path);
-  }
+	constructor(lz_path) {
+		this.lzstring = require(lz_path);
+	}
 
-  decode(savefile_path) {
-    const zipdata = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
-    const json = this.lzstring.decompressFromBase64(zipdata);
-    return json;
-  }
+	decode(savefile_path) {
+		const zipdata = fs.readFileSync(savefile_path, {
+			encoding: 'utf-8'
+		});
+		const json = this.lzstring.decompressFromBase64(zipdata);
+		return json;
+	}
 
-  encode(json_str) {
-    return this.lzstring.compressToBase64(json_str);
-  }
+	encode(json_str) {
+		return this.lzstring.compressToBase64(json_str);
+	}
 }
 
 function get_rm_root(curr_path) {
-  // I'm not super familiar with RPGMaker so I don't know if this function is
-  // 100% reliable. I also don't know if this will work on Windows with its
-  // weird paths. YOLO
-  if (fs.existsSync(path.join(curr_path, 'Game')) ||
-      fs.existsSync(path.join(curr_path, 'nw'))) {
-    // This is currently the rm root!
-    return curr_path;
-  }
+	// I'm not super familiar with RPGMaker so I don't know if this function is
+	// 100% reliable. I also don't know if this will work on Windows with its
+	// weird paths. YOLO
+	if (fs.existsSync(path.join(curr_path, 'Game')) ||
+		fs.existsSync(path.join(curr_path, 'nw'))) {
+		// This is currently the rm root!
+		return curr_path;
+	}
 
-  let updir = path.dirname(curr_path);
-  if (updir == curr_path) {
-    // End the recursion
-    return null;
-  }
+	let updir = path.dirname(curr_path);
+	if (updir == curr_path) {
+		// End the recursion
+		return null;
+	}
 
-  return get_rm_root(updir);
+	return get_rm_root(updir);
 }
 
 function build_codec(file_path, rm_root) {
-  let pakopath = path.join(rm_root, 'js', 'libs', 'pako.min.js');
-  let lzpath = path.join(rm_root, 'www', 'js', 'libs', 'lz-string.js');
-  let codec = null;
+	let pakopath = path.join(rm_root, 'js', 'libs', 'pako.min.js');
+	let lzpath = path.join(rm_root, 'www', 'js', 'libs', 'lz-string.js');
+	let codec = null;
 
-  if (path.extname(file_path) == '.json') {
-    codec = new null_codec(rm_root);
-  } else if (fs.existsSync(pakopath)) {
-    // Build pako decodec
-    codec = new pako_codec(pakopath);
-  } else if (fs.existsSync(lzpath)) {
-    // Build lz-string decodec
-    codec = new lz_codec(lzpath);
-  }
+	if (path.extname(file_path) == '.json') {
+		codec = new null_codec(rm_root);
+	} else if (fs.existsSync(pakopath)) {
+		// Build pako decodec
+		codec = new pako_codec(pakopath);
+	} else if (fs.existsSync(lzpath)) {
+		// Build lz-string decodec
+		codec = new lz_codec(lzpath);
+	}
 
-  return codec;
+	return codec;
 }
 
 /**
@@ -98,62 +106,66 @@ function build_codec(file_path, rm_root) {
  * savefile data.
  */
 function get_context(file_path) {
-  let context = {savefile: file_path};
+	let context = {
+		savefile: file_path
+	};
 
-  // Find the data directory
-  let savedir = path.dirname(file_path);
-  let maindir = path.dirname(savedir);
-  let datadir = path.join(maindir, 'data');
-  if (!fs.existsSync(datadir)) {
-    console.error('Could not find data dir for ' + file_path);
-    return {};
-  }
+	// Find the data directory
+	let savedir = path.dirname(file_path);
+	let maindir = path.dirname(savedir);
+	let datadir = path.join(maindir, 'data');
+	if (!fs.existsSync(datadir)) {
+		console.error('Could not find data dir for ' + file_path);
+		return {};
+	}
 
-  // Load the context
-  let context_files = {
-    items: path.join(datadir, 'Items.json'),
-    armors: path.join(datadir, 'Armors.json'),
-    weapons: path.join(datadir, 'Weapons.json'),
-    variables: path.join(datadir, 'System.json')
-  };
+	// Load the context
+	let context_files = {
+		items: path.join(datadir, 'Items.json'),
+		armors: path.join(datadir, 'Armors.json'),
+		weapons: path.join(datadir, 'Weapons.json'),
+		variables: path.join(datadir, 'System.json')
+	};
 
-  Object.entries(context_files).forEach((entry) => {
-    [key, filepath] = entry;
-    if (fs.existsSync(filepath)) {
-      context[key] = fs.readFileSync(filepath, { encoding: 'utf-8' });
-    }
-  });
+	Object.entries(context_files).forEach((entry) => {
+		[key, filepath] = entry;
+		if (fs.existsSync(filepath)) {
+			context[key] = fs.readFileSync(filepath, {
+				encoding: 'utf-8'
+			});
+		}
+	});
 
-  return context;
+	return context;
 }
 
 function load(file_path) {
-  let rm_root = get_rm_root(file_path);
-  if (rm_root === null) {
-    console.error('Could not find RPGMaker root dir...aborting');
-    // Could possibly prompt user?
-    return null;
-  }
-  let codec = build_codec(file_path, rm_root);
-  let json = codec.decode(file_path);
-  let context = get_context(file_path);
+	let rm_root = get_rm_root(file_path);
+	if (rm_root === null) {
+		console.error('Could not find RPGMaker root dir...aborting');
+		// Could possibly prompt user?
+		return null;
+	}
+	let codec = build_codec(file_path, rm_root);
+	let json = codec.decode(file_path);
+	let context = get_context(file_path);
 
-  context['json_txt'] = json;
-  context['rm_root'] = rm_root;
-  return context;
+	context['json_txt'] = json;
+	context['rm_root'] = rm_root;
+	return context;
 }
 
 async function save(file_path, json_str, rm_root) {
-  let codec = build_codec(file_path, rm_root);
-  let strdata = codec.encode(json_str);
+	let codec = build_codec(file_path, rm_root);
+	let strdata = codec.encode(json_str);
 
-  try {
-    await fsprom.writeFile(file_path, strdata);
-  } catch(err) {
-    console.log('Error saving file ' + file_path + ': ' + err);
-    return '';
-  }
-  return file_path;
+	try {
+		await fsprom.writeFile(file_path, strdata);
+	} catch (err) {
+		console.log('Error saving file ' + file_path + ': ' + err);
+		return '';
+	}
+	return file_path;
 }
 
 exports.load = load;
