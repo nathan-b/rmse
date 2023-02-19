@@ -65,7 +65,9 @@ function get_rm_root(curr_path) {
 	// 100% reliable. I also don't know if this will work on Windows with its
 	// weird paths. YOLO
 	if (fs.existsSync(path.join(curr_path, 'Game')) ||
-		fs.existsSync(path.join(curr_path, 'nw'))) {
+	    fs.existsSync(path.join(curr_path, 'nw'))   ||
+	    fs.existsSync(path.join(curr_path, 'Game.exe')) ||
+	    fs.existsSync(path.join(curr_path, 'nw.exe'))) {
 		// This is currently the rm root!
 		return curr_path;
 	}
