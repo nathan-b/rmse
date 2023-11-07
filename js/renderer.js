@@ -497,7 +497,7 @@ function build_sections(json, context) {
  *   'object'   => Parsed JSON object
  */
 function build_palette(sections, fdata) {
-	llet palette = document.getElementById('palette');
+	let palette = document.getElementById('palette');
 
 let savebtn = document.createElement('button');
 savebtn.textContent = 'Overwrite ' + fdata['filename'];
@@ -509,6 +509,7 @@ savebtn.onclick = async (event) => {
   } catch (e) {
     console.error(`Error saving file: ${e}`);
   }
+};
 
 	let saveasbtn = document.createElement('button');
 	saveasbtn.textContent = 'Save as...';
