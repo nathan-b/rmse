@@ -499,12 +499,17 @@ function build_sections(json, context) {
 function build_palette(sections, fdata) {
 	let palette = document.getElementById('palette');
 
-	let savebtn = document.createElement('button');
-	savebtn.textContent = 'Overwrite ' + fdata['filename'];
-	savebtn.classList.add('palette-button');
-	savebtn.onclick = (event) => {
-		handle_save(fdata['savefile'], fdata['object'], fdata['rm_root'], sections);
-	}
+let savebtn = document.createElement('button');
+savebtn.textContent = 'Overwrite ' + fdata['filename'];
+savebtn.classList.add('palette-button');
+savebtn.onclick = async (event) => {
+  try {
+    await handle_save(fdata['savefile'], fdata['object'], fdata['rm_root'], sections);
+    window.close(); // Close the current window (app). 
+  } catch (e) {
+    console.error(`Error saving file: ${e}`);
+  }
+};
 
 	let saveasbtn = document.createElement('button');
 	saveasbtn.textContent = 'Save as...';

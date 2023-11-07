@@ -1,3 +1,8 @@
+# KC changes
+Added standalone app for Windows plus app closes itself upon overwriting save.
+
+
+
 # RPGMaker Save Editor
 
 This is a tool for editing RPGMaker save files. It currently supports save files written by RPG Maker MZ (.rmmzsave), but support for other versions of RPGMaker is planned for the future.
