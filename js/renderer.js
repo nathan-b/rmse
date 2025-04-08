@@ -634,7 +634,10 @@ function drop_handler(ev) {
 	ev.preventDefault();
 	for (var i = 0; i < ev.dataTransfer.items.length; ++i) {
 		if (ev.dataTransfer.items[i].kind === 'file') {
-			let file = ev.dataTransfer.items[i].getAsFile();
+			let file = {
+				path: window.ipc_bridge.path_for_file(ev.dataTransfer.items[i].getAsFile()),
+			}
+
 			set_text('status', 'Loading file ' + file.path);
 			window.ipc_bridge.load_file(file.path, handle_file_load);
 		}
