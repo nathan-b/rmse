@@ -4,7 +4,7 @@ const {
 	webUtils
 } = require('electron');
 
-const path_basename = (p) => p.substring(p.lastIndexOf('/') + 1);
+const path_basename = (p) => p.substring(p.lastIndexOf(path.sep) + 1);
 
 // Set up APIs for sandboxed environment
 contextBridge.exposeInMainWorld('ipc_bridge', {
