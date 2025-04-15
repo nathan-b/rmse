@@ -9,6 +9,6 @@
   "author": "Nathan Baker",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^16.0.5"
+    "electron": "^35.1.4"
   }
 }

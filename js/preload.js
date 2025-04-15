@@ -1,19 +1,22 @@
 const {
 	contextBridge,
-	ipcRenderer
+	ipcRenderer,
+	webUtils
 } = require('electron');
-const path = require('path');
+
+const path_basename = (p) => p.substring(p.lastIndexOf(path.sep) + 1);
 
 // Set up APIs for sandboxed environment
 contextBridge.exposeInMainWorld('ipc_bridge', {
+  path_for_file: (file) => webUtils.getPathForFile(file),
 	load_file: (file_path, callback) => {
 		ipcRenderer.invoke('load_file', file_path).then((result) => {
-			callback(path.basename(file_path), result);
+			callback(path_basename(file_path), result);
 		});
 	},
 	open_file: (callback) => {
 		ipcRenderer.invoke('open_file').then((result) => {
-			callback(path.basename(result.savefile), result);
+			callback(path_basename(result.savefile), result);
 		});
 	},
 	save_file: (file_path, json_str, rm_root, callback) => {
