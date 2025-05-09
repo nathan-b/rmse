@@ -20,6 +20,10 @@ class value_item {
 		this.jobj = owner;
 		this.field = field;
 		this.type = typeof owner[field];
+		// In JavaScript, arrays are objects...need an extra pass
+		if (this.type == "object" && Array.IsArray(owner[field])) {
+			this.type = "array";
+		}
 		this.labeltext = label;
 	}
 
@@ -49,6 +53,8 @@ class value_item {
 			newval = Number(this.input_elem.value);
 		} else if (this.type == 'boolean') {
 			newval = Boolean(this.input_elem.value);
+		} else if (this.type == 'array' ) {
+			newval = this.input_elem.value.split(',');
 		} else {
 			// YOLO string
 			newval = this.input_elem.value
