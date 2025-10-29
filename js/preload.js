@@ -1,14 +1,10 @@
-const {
-	contextBridge,
-	ipcRenderer,
-	webUtils
-} = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 const path_basename = (p) => p.substring(p.lastIndexOf(webUtils.getPathForFile.sep) + 1);
 
 // Set up APIs for sandboxed environment
 contextBridge.exposeInMainWorld('ipc_bridge', {
-  path_for_file: (file) => webUtils.getPathForFile(file),
+	path_for_file: (file) => webUtils.getPathForFile(file),
 	load_file: (file_path, callback) => {
 		ipcRenderer.invoke('load_file', file_path).then((result) => {
 			callback(path_basename(file_path), result);
@@ -34,6 +30,4 @@ contextBridge.exposeInMainWorld('ipc_bridge', {
 	}
 });
 
-window.addEventListener('DOMContentLoaded', () => {
-
-});
+window.addEventListener('DOMContentLoaded', () => {});

@@ -33,12 +33,14 @@ npm run test:coverage
 ### Unit Tests
 
 **rm_load.js**:
+
 - Finding RPGMaker root directory
 - Codec selection (JSON, Pako, LZ-string)
 - Error handling for missing files/directories
 - Save file loading and saving
 
 **value_parsing.test.js**:
+
 - Number parsing and validation
 - Boolean parsing (true/false, 1/0)
 - Array parsing with whitespace trimming
@@ -47,6 +49,7 @@ npm run test:coverage
 ### Integration Tests
 
 **file_operations.test.js**:
+
 - Complete load-modify-save workflow
 - JSON file loading and saving
 - Error handling for invalid paths
@@ -80,6 +83,7 @@ describe('Workflow test', () => {
 ## Test Fixtures
 
 Test fixtures (sample data) are stored in `tests/fixtures/`. These include:
+
 - Sample save files
 - Mock game directory structures
 - Context files (Items.json, etc.)

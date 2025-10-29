@@ -4,7 +4,7 @@
 function set_text(selector, text) {
 	const element = document.getElementById(selector);
 	if (element) element.innerText = text;
-	else console.log("Bad did happen");
+	else console.log('Bad did happen');
 }
 
 /**
@@ -21,8 +21,8 @@ class value_item {
 		this.field = field;
 		this.type = typeof owner[field];
 		// In JavaScript, arrays are objects...need an extra pass
-		if (this.type === "object" && Array.isArray(owner[field])) {
-			this.type = "array";
+		if (this.type === 'object' && Array.isArray(owner[field])) {
+			this.type = 'array';
 		}
 		this.labeltext = label;
 	}
@@ -52,7 +52,9 @@ class value_item {
 		if (this.type === 'number') {
 			newval = Number(this.input_elem.value);
 			if (isNaN(newval)) {
-				console.warn(`Invalid number input for ${this.labeltext}: "${this.input_elem.value}"`);
+				console.warn(
+					`Invalid number input for ${this.labeltext}: "${this.input_elem.value}"`
+				);
 				// Keep the original value if input is invalid
 				return;
 			}
@@ -64,14 +66,16 @@ class value_item {
 			} else if (val === 'false' || val === '0') {
 				newval = false;
 			} else {
-				console.warn(`Invalid boolean input for ${this.labeltext}: "${this.input_elem.value}"`);
+				console.warn(
+					`Invalid boolean input for ${this.labeltext}: "${this.input_elem.value}"`
+				);
 				return;
 			}
 		} else if (this.type === 'array') {
-			newval = this.input_elem.value.split(',').map(s => s.trim());
+			newval = this.input_elem.value.split(',').map((s) => s.trim());
 		} else {
 			// YOLO string
-			newval = this.input_elem.value
+			newval = this.input_elem.value;
 		}
 		this.jobj[this.field] = newval;
 	}
@@ -208,7 +212,7 @@ class section {
 		let extras_div = document.createElement('div');
 
 		// Enable expand / collapse behavior
-		header.onclick = function(event) {
+		header.onclick = function (event) {
 			if (event.target.classList.contains('expanded')) {
 				event.target.classList.remove('expanded');
 				event.target.classList.add('collapsed');
@@ -258,7 +262,7 @@ class section {
 				val.obj[val.id] = 1;
 
 				// Create the new item
-				let item = new value_item(val.obj, val.id, val.name)
+				let item = new value_item(val.obj, val.id, val.name);
 				this.add_item(item);
 
 				// Add to the DOM
@@ -291,8 +295,8 @@ function build_item_table(json) {
 	json.forEach((item, index) => {
 		if (item.name.length !== 0) {
 			item_table[index] = {
-				'name': item.name,
-				'description': item.description
+				name: item.name,
+				description: item.description
 			};
 		}
 	});
@@ -306,37 +310,37 @@ function build_attribute_context() {
 	};
 
 	ctx.current['_hp'] = {
-		'name': 'Current HP'
+		name: 'Current HP'
 	};
 	ctx.current['_mp'] = {
-		'name': 'Current MP'
+		name: 'Current MP'
 	};
 	ctx.current['_tp'] = {
-		'name': 'Current TP'
+		name: 'Current TP'
 	};
 	ctx.static[0] = {
-		'name': 'Max HP'
+		name: 'Max HP'
 	};
 	ctx.static[1] = {
-		'name': 'Max MP'
+		name: 'Max MP'
 	};
 	ctx.static[2] = {
-		'name': 'Attack'
+		name: 'Attack'
 	};
 	ctx.static[3] = {
-		'name': 'Defense'
+		name: 'Defense'
 	};
 	ctx.static[4] = {
-		'name': 'Magic Attack'
+		name: 'Magic Attack'
 	};
 	ctx.static[5] = {
-		'name': 'Magic Defense'
+		name: 'Magic Defense'
 	};
 	ctx.static[6] = {
-		'name': 'Agility'
+		name: 'Agility'
 	};
 	ctx.static[7] = {
-		'name': 'Luck'
+		name: 'Luck'
 	};
 
 	return ctx;
@@ -353,7 +357,7 @@ function load_section(name, json_parent, section_arr, ctx, extras) {
 	let section_obj = new section(name);
 
 	if (Object.entries(json_parent).length > 0) {
-		Object.entries(json_parent).forEach(entry => {
+		Object.entries(json_parent).forEach((entry) => {
 			const [id, quantity] = entry;
 
 			// Perform context lookup, if available
@@ -411,15 +415,17 @@ function load_array_section(name, json_parent, section_arr, ctx) {
 function load_extra_items(item_obj, item_ctx) {
 	let extra_items = [];
 	item_ctx.forEach((item) => {
-		if (item &&
+		if (
+			item &&
 			item['name'] &&
 			item['name'].length > 0 &&
 			item['name'][0] !== '-' &&
-			!item_obj[item.id]) {
+			!item_obj[item.id]
+		) {
 			extra_items.push({
-				'name': item['name'],
-				'id': item['id'],
-				'obj': item_obj
+				name: item['name'],
+				id: item['id'],
+				obj: item_obj
 			});
 		}
 	});
@@ -524,21 +530,21 @@ function build_palette(sections, fdata) {
 	savebtn.classList.add('palette-button');
 	savebtn.onclick = (event) => {
 		handle_save(fdata['savefile'], fdata['object'], fdata['rm_root'], sections);
-	}
+	};
 
 	let saveasbtn = document.createElement('button');
 	saveasbtn.textContent = 'Save as...';
 	saveasbtn.classList.add('palette-button');
 	saveasbtn.onclick = (event) => {
 		handle_save('', fdata['object'], fdata['rm_root'], sections);
-	}
+	};
 
 	let jdumpbtn = document.createElement('button');
 	jdumpbtn.textContent = 'Dump raw JSON';
 	jdumpbtn.classList.add('palette-button');
 	jdumpbtn.onclick = (event) => {
 		dump_json(JSON.stringify(fdata['object']), fdata['rm_root']);
-	}
+	};
 
 	let resetbtn = document.createElement('button');
 	resetbtn.textContent = 'Revert all changes';
@@ -547,7 +553,7 @@ function build_palette(sections, fdata) {
 		sections.forEach((section) => {
 			section.reset_values();
 		});
-	}
+	};
 
 	palette.appendChild(savebtn);
 	palette.appendChild(saveasbtn);
@@ -569,7 +575,7 @@ function handle_save(outfile, json, rm_root, sections) {
 	set_text('status', 'Saving ' + outfile);
 	// This will update the json object to contain the new values
 	sections.forEach((section) => {
-		section.update_values()
+		section.update_values();
 	});
 
 	// Now save the json
@@ -665,8 +671,8 @@ function drop_handler(ev) {
 	for (var i = 0; i < ev.dataTransfer.items.length; ++i) {
 		if (ev.dataTransfer.items[i].kind === 'file') {
 			let file = {
-				path: window.ipc_bridge.path_for_file(ev.dataTransfer.items[i].getAsFile()),
-			}
+				path: window.ipc_bridge.path_for_file(ev.dataTransfer.items[i].getAsFile())
+			};
 
 			set_text('status', 'Loading file ' + file.path);
 			window.ipc_bridge.load_file(file.path, handle_file_load);

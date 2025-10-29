@@ -1,33 +1,36 @@
 {
-  "name": "rpgmaker_save_editor",
-  "version": "1.0.0",
-  "description": "Save file editor for RPGMaker games",
-  "main": "js/main.js",
-  "scripts": {
-    "start": "electron .",
-    "dev": "NODE_ENV=development electron .",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
-  },
-  "author": "Nathan Baker",
-  "license": "MIT",
-  "devDependencies": {
-    "electron": "^35.1.4",
-    "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ],
-    "collectCoverageFrom": [
-      "js/**/*.js",
-      "!js/preload.js",
-      "!js/main.js"
-    ],
-    "coverageDirectory": "coverage",
-    "verbose": true
-  }
+	"name": "rpgmaker_save_editor",
+	"version": "1.0.0",
+	"description": "Save file editor for RPGMaker games",
+	"main": "js/main.js",
+	"scripts": {
+		"start": "electron .",
+		"dev": "NODE_ENV=development electron .",
+		"test": "jest",
+		"test:watch": "jest --watch",
+		"test:coverage": "jest --coverage",
+		"format": "prettier --write \"**/*.{js,json,md,css,html}\"",
+		"format:check": "prettier --check \"**/*.{js,json,md,css,html}\""
+	},
+	"author": "Nathan Baker",
+	"license": "MIT",
+	"devDependencies": {
+		"electron": "^35.1.4",
+		"jest": "^30.2.0",
+		"jest-environment-jsdom": "^30.2.0",
+		"prettier": "^3.6.2"
+	},
+	"jest": {
+		"testEnvironment": "node",
+		"testMatch": [
+			"**/tests/**/*.test.js"
+		],
+		"collectCoverageFrom": [
+			"js/**/*.js",
+			"!js/preload.js",
+			"!js/main.js"
+		],
+		"coverageDirectory": "coverage",
+		"verbose": true
+	}
 }

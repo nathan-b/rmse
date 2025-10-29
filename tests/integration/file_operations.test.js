@@ -164,11 +164,7 @@ describe('File operations integration tests', () => {
 		test('should handle save errors gracefully', async () => {
 			const invalidPath = '/invalid/readonly/path/file.json';
 
-			const result = await rm_loader.save(
-				invalidPath,
-				'{"test": "data"}',
-				'/some/root'
-			);
+			const result = await rm_loader.save(invalidPath, '{"test": "data"}', '/some/root');
 
 			expect(result).toBe('');
 		});

@@ -1,56 +1,49 @@
 {
-  "party": {
-    "_gold": 1000,
-    "_steps": 500,
-    "_items": {
-      "1": 5,
-      "2": 3
-    },
-    "_weapons": {
-      "1": 1
-    },
-    "_armors": {
-      "1": 1
-    },
-    "_actors": {
-      "@a": [
-        null,
-        {
-          "_actorId": 1,
-          "_name": "TestHero",
-          "_hp": 100,
-          "_mp": 50,
-          "_tp": 0,
-          "_paramPlus": [50, 25, 10, 8, 5, 5, 10, 5]
-        }
-      ]
-    }
-  },
-  "actors": {
-    "_data": {
-      "@a": [
-        null,
-        {
-          "_actorId": 1,
-          "_name": "TestHero",
-          "_hp": 100,
-          "_mp": 50,
-          "_tp": 0,
-          "_paramPlus": [50, 25, 10, 8, 5, 5, 10, 5]
-        }
-      ]
-    }
-  },
-  "variables": {
-    "_data": {
-      "@a": [
-        null,
-        10,
-        20,
-        null,
-        null,
-        "test_string"
-      ]
-    }
-  }
+	"party": {
+		"_gold": 1000,
+		"_steps": 500,
+		"_items": {
+			"1": 5,
+			"2": 3
+		},
+		"_weapons": {
+			"1": 1
+		},
+		"_armors": {
+			"1": 1
+		},
+		"_actors": {
+			"@a": [
+				null,
+				{
+					"_actorId": 1,
+					"_name": "TestHero",
+					"_hp": 100,
+					"_mp": 50,
+					"_tp": 0,
+					"_paramPlus": [50, 25, 10, 8, 5, 5, 10, 5]
+				}
+			]
+		}
+	},
+	"actors": {
+		"_data": {
+			"@a": [
+				null,
+				{
+					"_actorId": 1,
+					"_name": "TestHero",
+					"_hp": 100,
+					"_mp": 50,
+					"_tp": 0,
+					"_paramPlus": [50, 25, 10, 8, 5, 5, 10, 5]
+				}
+			]
+		}
+	},
+	"variables": {
+		"_data": {
+			"@a": [null, 10, 20, null, null, "test_string"]
+		}
+	}
 }

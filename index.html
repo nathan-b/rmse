@@ -1,33 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-	<meta charset="UTF-8">
-	<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-	<link href="./styles.css" rel="stylesheet">
-	<title>RPGMaker Save Editor</title>
-</head>
-<body>
-	<h1>RPGMaker Save Editor</h1>
-	<div id="receive_file" class="dropzone">
-		<br>
-  	<p class="droptext">Drop your files here!</p>
-		<br>
-	</div>
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			http-equiv="Content-Security-Policy"
+			content="default-src 'self'; script-src 'self'"
+		/>
+		<link href="./styles.css" rel="stylesheet" />
+		<title>RPGMaker Save Editor</title>
+	</head>
+	<body>
+		<h1>RPGMaker Save Editor</h1>
+		<div id="receive_file" class="dropzone">
+			<br />
+			<p class="droptext">Drop your files here!</p>
+			<br />
+		</div>
 
-	<div id="content" class="content">
+		<div id="content" class="content"></div>
 
-	</div>
+		<div id="palette" class="palette"></div>
 
-	<div id="palette" class="palette">
-	</div>
+		<div id="status" class="status">
+			<p id="statustext" class="statustext"></p>
+		</div>
 
-	<div id="status" class="status">
-		<p id="statustext" class="statustext"></p>
-	</div>
-
-	<hr>
-	<p id="footer" class="footer"></p>
-	<br><br><br>
-	<script src="./js/renderer.js"></script>
-</body>
+		<hr />
+		<p id="footer" class="footer"></p>
+		<br /><br /><br />
+		<script src="./js/renderer.js"></script>
+	</body>
 </html>

@@ -1,112 +1,109 @@
 body {
-  /* Add bottom padding to allow scrolling past fixed bottom elements */
-  padding-bottom: 120px;
+	/* Add bottom padding to allow scrolling past fixed bottom elements */
+	padding-bottom: 120px;
 }
 
 div.dropzone {
-  background-color: green;
+	background-color: green;
 }
 
 div.dropzone-hidden {
-  display: none;
+	display: none;
 }
 
 p.droptext {
-  text-align: center;
-  color: white;
-  background-color: inherit;
+	text-align: center;
+	color: white;
+	background-color: inherit;
 }
 
 p.label {
-  text-align: right;
+	text-align: right;
 }
 
 div.palette {
-  position: fixed;
-  bottom: 25px;
-  right: 30px;
-  z-index: 100;
-  border: 2px solid lightblue;
-  border-radius: 5px;
-  padding: 15px;
+	position: fixed;
+	bottom: 25px;
+	right: 30px;
+	z-index: 100;
+	border: 2px solid lightblue;
+	border-radius: 5px;
+	padding: 15px;
 
-  display: grid;
-  grid-auto-flow: column;
-  grid-gap: 10px;
+	display: grid;
+	grid-auto-flow: column;
+	grid-gap: 10px;
 }
 
 div.status {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  background-color: white;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	background-color: white;
 }
 
 div.extras {
-  padding-top: 5px;
+	padding-top: 5px;
 }
 
 button.palette-button {
-
 }
 
 .character-name {
-  text-align: center;
+	text-align: center;
 }
 
 .section-header {
-
 }
 
 .expanded::before {
-  content: '\25BC';
-  padding-right: 10px;
-  padding-left: 0px;
+	content: '\25BC';
+	padding-right: 10px;
+	padding-left: 0px;
 }
 
 .collapsed::before {
-  content: '\25B8';
-  padding-right: 10px;
-  padding-left: 0px;
+	content: '\25B8';
+	padding-right: 10px;
+	padding-left: 0px;
 }
 
 div.content {
-  text-align: left;
-  display: grid;
+	text-align: left;
+	display: grid;
 }
 
 div.section {
-
 }
 
 div.section-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 320px);
-  grid-row-gap: 5px;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 320px);
+	grid-row-gap: 5px;
 }
 
 div.section-hidden {
-  display: none;
+	display: none;
 }
 
 div.character-content {
-  grid-template-columns: repeat(auto-fit, 175px);
-  grid-row-gap: 0px;
+	grid-template-columns: repeat(auto-fit, 175px);
+	grid-row-gap: 0px;
 }
 
 div.item {
-  display: grid;
-  grid-column-gap: 10px;
-  grid-template-columns: 150px 150px;
-  grid-auto-rows: 2em;
-  align-items: center;
+	display: grid;
+	grid-column-gap: 10px;
+	grid-template-columns: 150px 150px;
+	grid-auto-rows: 2em;
+	align-items: center;
 }
 
 div.character-item {
-  /* Override column sizes from item above */
-  grid-template-columns: 100px 75px;
+	/* Override column sizes from item above */
+	grid-template-columns: 100px 75px;
 }
 
 input.value {
-  line-height: 2em;
+	line-height: 2em;
 }

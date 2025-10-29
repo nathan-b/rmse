@@ -33,7 +33,7 @@ class pako_codec {
 			// Pako expects binary data (Buffer), not UTF-8 string
 			const zipdata = fs.readFileSync(savefile_path);
 			const json = this.pako.inflate(zipdata, {
-				to: "string"
+				to: 'string'
 			});
 			return json;
 		} catch (err) {
@@ -43,7 +43,7 @@ class pako_codec {
 
 	encode(json_str) {
 		return this.pako.deflate(json_str, {
-			to: "string",
+			to: 'string',
 			level: 1
 		});
 	}
@@ -75,10 +75,12 @@ function get_rm_root(curr_path) {
 	// I'm not super familiar with RPGMaker so I don't know if this function is
 	// 100% reliable. I also don't know if this will work on Windows with its
 	// weird paths. YOLO
-	if (fs.existsSync(path.join(curr_path, 'Game')) ||
-	    fs.existsSync(path.join(curr_path, 'nw'))   ||
-	    fs.existsSync(path.join(curr_path, 'Game.exe')) ||
-	    fs.existsSync(path.join(curr_path, 'nw.exe'))) {
+	if (
+		fs.existsSync(path.join(curr_path, 'Game')) ||
+		fs.existsSync(path.join(curr_path, 'nw')) ||
+		fs.existsSync(path.join(curr_path, 'Game.exe')) ||
+		fs.existsSync(path.join(curr_path, 'nw.exe'))
+	) {
 		// This is currently the rm root!
 		return curr_path;
 	}
@@ -191,4 +193,4 @@ async function save(file_path, json_str, rm_root) {
 
 exports.load = load;
 exports.save = save;
-exports.get_rm_root = get_rm_root
+exports.get_rm_root = get_rm_root;

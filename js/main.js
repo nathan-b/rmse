@@ -1,9 +1,4 @@
-const {
-	app,
-	BrowserWindow,
-	ipcMain,
-	dialog
-} = require('electron');
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fsprom = require('fs').promises;
 const rm_loader = require('./rm_load.js');
@@ -22,7 +17,7 @@ function createWindow() {
 
 	// Only open dev tools in development
 	if (process.env.NODE_ENV === 'development' || process.argv.includes('--dev')) {
-		mainwin.webContents.openDevTools({ mode: "detach" });
+		mainwin.webContents.openDevTools({ mode: 'detach' });
 	}
 
 	try {
@@ -107,19 +102,18 @@ ipcMain.handle('dump_json', async (event, json_str, rm_root) => {
 	return file_path;
 });
 
-
 // Entrypoint
 app.whenReady().then(() => {
-	createWindow()
+	createWindow();
 
-	app.on('activate', function() {
+	app.on('activate', function () {
 		// On macOS it's common to re-create a window in the app when the
 		// dock icon is clicked and there are no other windows open.
-		if (BrowserWindow.getAllWindows().length === 0) createWindow()
-	})
-})
+		if (BrowserWindow.getAllWindows().length === 0) createWindow();
+	});
+});
 
 // Exit handler
-app.on('window-all-closed', function() {
-	if (process.platform !== 'darwin') app.quit()
-})
+app.on('window-all-closed', function () {
+	if (process.platform !== 'darwin') app.quit();
+});
