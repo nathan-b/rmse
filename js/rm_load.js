@@ -8,10 +8,14 @@ class null_codec {
 	}
 
 	decode(savefile_path) {
-		const json = fs.readFileSync(savefile_path, {
-			encoding: 'utf-8'
-		});
-		return json;
+		try {
+			const json = fs.readFileSync(savefile_path, {
+				encoding: 'utf-8'
+			});
+			return json;
+		} catch (err) {
+			throw new Error(`Failed to read save file: ${err.message}`);
+		}
 	}
 
 	encode(json_str) {
@@ -25,13 +29,16 @@ class pako_codec {
 	}
 
 	decode(savefile_path) {
-		const zipdata = fs.readFileSync(savefile_path, {
-			encoding: 'utf-8'
-		});
-		const json = this.pako.inflate(zipdata, {
-			to: "string"
-		});
-		return json;
+		try {
+			// Pako expects binary data (Buffer), not UTF-8 string
+			const zipdata = fs.readFileSync(savefile_path);
+			const json = this.pako.inflate(zipdata, {
+				to: "string"
+			});
+			return json;
+		} catch (err) {
+			throw new Error(`Failed to decompress save file: ${err.message}`);
+		}
 	}
 
 	encode(json_str) {
@@ -48,11 +55,15 @@ class lz_codec {
 	}
 
 	decode(savefile_path) {
-		const zipdata = fs.readFileSync(savefile_path, {
-			encoding: 'utf-8'
-		});
-		const json = this.lzstring.decompressFromBase64(zipdata);
-		return json;
+		try {
+			const zipdata = fs.readFileSync(savefile_path, {
+				encoding: 'utf-8'
+			});
+			const json = this.lzstring.decompressFromBase64(zipdata);
+			return json;
+		} catch (err) {
+			throw new Error(`Failed to decompress save file: ${err.message}`);
+		}
 	}
 
 	encode(json_str) {
@@ -73,7 +84,7 @@ function get_rm_root(curr_path) {
 	}
 
 	let updir = path.dirname(curr_path);
-	if (updir == curr_path) {
+	if (updir === curr_path) {
 		// End the recursion
 		return null;
 	}
@@ -86,7 +97,7 @@ function build_codec(file_path, rm_root) {
 	let lzpath = path.join(rm_root, 'www', 'js', 'libs', 'lz-string.js');
 	let codec = null;
 
-	if (path.extname(file_path) == '.json') {
+	if (path.extname(file_path) === '.json') {
 		codec = new null_codec(rm_root);
 	} else if (fs.existsSync(pakopath)) {
 		// Build pako decodec
@@ -130,11 +141,16 @@ function get_context(file_path) {
 	};
 
 	Object.entries(context_files).forEach((entry) => {
-		[key, filepath] = entry;
+		let [key, filepath] = entry;
 		if (fs.existsSync(filepath)) {
-			context[key] = fs.readFileSync(filepath, {
-				encoding: 'utf-8'
-			});
+			try {
+				context[key] = fs.readFileSync(filepath, {
+					encoding: 'utf-8'
+				});
+			} catch (err) {
+				console.error(`Failed to read context file ${filepath}: ${err.message}`);
+				// Continue loading other context files
+			}
 		}
 	});
 
@@ -144,11 +160,14 @@ function get_context(file_path) {
 function load(file_path) {
 	let rm_root = get_rm_root(file_path);
 	if (rm_root === null) {
-		console.error('Could not find RPGMaker root dir...aborting');
-		// Could possibly prompt user?
-		return null;
+		throw new Error('Could not find RPGMaker root directory');
 	}
+
 	let codec = build_codec(file_path, rm_root);
+	if (codec === null) {
+		throw new Error('Could not determine save file format');
+	}
+
 	let json = codec.decode(file_path);
 	let context = get_context(file_path);
 

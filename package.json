@@ -4,7 +4,8 @@
   "description": "Save file editor for RPGMaker games",
   "main": "js/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron ."
   },
   "author": "Nathan Baker",
   "license": "MIT",

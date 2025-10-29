@@ -21,7 +21,7 @@ class value_item {
 		this.field = field;
 		this.type = typeof owner[field];
 		// In JavaScript, arrays are objects...need an extra pass
-		if (this.type == "object" && Array.IsArray(owner[field])) {
+		if (this.type === "object" && Array.isArray(owner[field])) {
 			this.type = "array";
 		}
 		this.labeltext = label;
@@ -49,12 +49,26 @@ class value_item {
 
 	update_value() {
 		var newval = '';
-		if (this.type == 'number') {
+		if (this.type === 'number') {
 			newval = Number(this.input_elem.value);
-		} else if (this.type == 'boolean') {
-			newval = Boolean(this.input_elem.value);
-		} else if (this.type == 'array' ) {
-			newval = this.input_elem.value.split(',');
+			if (isNaN(newval)) {
+				console.warn(`Invalid number input for ${this.labeltext}: "${this.input_elem.value}"`);
+				// Keep the original value if input is invalid
+				return;
+			}
+		} else if (this.type === 'boolean') {
+			// Proper boolean parsing (not just Boolean() which is always truthy for non-empty strings)
+			const val = this.input_elem.value.toLowerCase().trim();
+			if (val === 'true' || val === '1') {
+				newval = true;
+			} else if (val === 'false' || val === '0') {
+				newval = false;
+			} else {
+				console.warn(`Invalid boolean input for ${this.labeltext}: "${this.input_elem.value}"`);
+				return;
+			}
+		} else if (this.type === 'array') {
+			newval = this.input_elem.value.split(',').map(s => s.trim());
 		} else {
 			// YOLO string
 			newval = this.input_elem.value
@@ -275,7 +289,7 @@ class section {
 function build_item_table(json) {
 	let item_table = [];
 	json.forEach((item, index) => {
-		if (item.name.length != 0) {
+		if (item.name.length !== 0) {
 			item_table[index] = {
 				'name': item.name,
 				'description': item.description
@@ -400,7 +414,7 @@ function load_extra_items(item_obj, item_ctx) {
 		if (item &&
 			item['name'] &&
 			item['name'].length > 0 &&
-			item['name'][0] != '-' &&
+			item['name'][0] !== '-' &&
 			!item_obj[item.id]) {
 			extra_items.push({
 				'name': item['name'],
@@ -589,7 +603,12 @@ function handle_file_load(filename, context_obj) {
 	set_text('status', 'Handling file load for ' + filename);
 
 	if (!context_obj) {
-		console.error('File load failed for ' + filename);
+		set_text('statustext', 'File load cancelled');
+		return;
+	}
+	if (context_obj.error) {
+		set_text('statustext', 'Error loading file: ' + context_obj.error);
+		console.error('File load failed for ' + filename + ':', context_obj.error);
 		return;
 	}
 	let fdata = {};
@@ -600,7 +619,12 @@ function handle_file_load(filename, context_obj) {
 	fdata['object'] = JSON.parse(json_txt);
 
 	let sections = build_sections(fdata['object'], context_obj);
+
+	// Clear previous content and palette to prevent memory leaks
 	const content_div = document.getElementById('content');
+	const palette_div = document.getElementById('palette');
+	content_div.innerHTML = '';
+	palette_div.innerHTML = '';
 
 	sections.forEach((section) => {
 		content_div.appendChild(section.create_DOM());
