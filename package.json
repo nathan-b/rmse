@@ -1,5 +1,5 @@
 {
-  "name": "RPGMaker Save Editor",
+  "name": "rpgmaker_save_editor",
   "version": "1.0.0",
   "description": "Save file editor for RPGMaker games",
   "main": "js/main.js",
