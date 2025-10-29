@@ -14,3 +14,6 @@ pids
 
 node_modules
 
+# Test coverage
+coverage/
+
