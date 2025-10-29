@@ -14,13 +14,28 @@ function createWindow() {
 		width: 1000,
 		height: 1200,
 		webPreferences: {
-			nodeIntegration: false,
 			preload: path.join(__dirname, 'preload.js')
 		}
 	});
 
 	mainwin.loadFile('index.html');
-	mainwin.webContents.openDevTools();
+
+	// Only open dev tools in development
+	if (process.env.NODE_ENV === 'development' || process.argv.includes('--dev')) {
+		mainwin.webContents.openDevTools({ mode: "detach" });
+	}
+
+	try {
+		mainwin.webContents.debugger.removeAllListeners('Autofill.enable');
+	} catch (error) {
+		console.warn('Disable Autofill.enable command failed:', error);
+	}
+
+	try {
+		mainwin.webContents.debugger.removeAllListeners('Autofill.setAddresses');
+	} catch (error) {
+		console.warn('Disable Autofill.setAddresses command failed:', error);
+	}
 }
 
 function getWindow() {
@@ -32,7 +47,12 @@ function getWindow() {
 
 // Message handlers
 ipcMain.handle('load_file', async (event, file_path) => {
-	return rm_loader.load(file_path);
+	try {
+		return rm_loader.load(file_path);
+	} catch (err) {
+		console.error('Error loading file:', err);
+		return { error: err.message };
+	}
 });
 
 ipcMain.on('get_version', (event) => {
@@ -54,13 +74,19 @@ ipcMain.handle('save_file', async (event, file_path, json_str, rm_root) => {
 });
 
 ipcMain.handle('open_file', async (event) => {
-	[file_path] = dialog.showOpenDialogSync(getWindow(), {
+	const result = dialog.showOpenDialogSync(getWindow(), {
 		title: 'Select a file to open',
 		properties: ['openFile']
 	});
-	if (file_path) {
-		return rm_loader.load(file_path);
+	if (result && result.length > 0) {
+		try {
+			return rm_loader.load(result[0]);
+		} catch (err) {
+			console.error('Error loading file:', err);
+			return { error: err.message };
+		}
 	}
+	return null;
 });
 
 ipcMain.handle('dump_json', async (event, json_str, rm_root) => {
