@@ -30,7 +30,7 @@ class pako_codec {
 
 	decode(savefile_path) {
 		try {
-			// Pako expects binary data (Buffer), not UTF-8 string
+			// Pako expects binary data
 			const zipdata = fs.readFileSync(savefile_path);
 			const json = this.pako.inflate(zipdata, {
 				to: 'string'
@@ -102,10 +102,10 @@ function build_codec(file_path, rm_root) {
 	if (path.extname(file_path) === '.json') {
 		codec = new null_codec(rm_root);
 	} else if (fs.existsSync(pakopath)) {
-		// Build pako decodec
+		// Build pako decoder
 		codec = new pako_codec(pakopath);
 	} else if (fs.existsSync(lzpath)) {
-		// Build lz-string decodec
+		// Build lz-string decoder
 		codec = new lz_codec(lzpath);
 	}
 

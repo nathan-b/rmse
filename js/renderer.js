@@ -360,6 +360,11 @@ function load_section(name, json_parent, section_arr, ctx, extras) {
 		Object.entries(json_parent).forEach((entry) => {
 			const [id, quantity] = entry;
 
+			if (id === '@c' || id === '@') {
+				// This is extra metadata, don't display it
+				return;
+			}
+
 			// Perform context lookup, if available
 			let name = String(id);
 			if (ctx[id]) {
@@ -433,8 +438,9 @@ function load_extra_items(item_obj, item_ctx) {
 }
 
 /**
- * This function is only necessary because older version of RPGMaker do
- * strange and awkward things with the JSON.
+ * RPGMaker uses a custom JSON stringifier that adds some additional metadata to the
+ * serialized JSON object. For example, arrays are not stored directly in their parent
+ * objects, but instead are stored with a key of "@a" and a value of the array.
  */
 function get_rm_arr(obj, field) {
 	let arr = obj[field];
@@ -520,6 +526,7 @@ function build_sections(json, context) {
  *   'filename' => Base name of the file (for printing)
  *   'savefile' => Full path to the save file
  *   'rm_root'  => Root RPGMaker directory path
+ *   'json_txt' => Original JSON text from the save file
  *   'object'   => Parsed JSON object
  */
 function build_palette(sections, fdata) {
@@ -543,7 +550,7 @@ function build_palette(sections, fdata) {
 	jdumpbtn.textContent = 'Dump raw JSON';
 	jdumpbtn.classList.add('palette-button');
 	jdumpbtn.onclick = (event) => {
-		dump_json(JSON.stringify(fdata['object']), fdata['rm_root']);
+		dump_json(fdata['json_txt'], fdata['rm_root']);
 	};
 
 	let resetbtn = document.createElement('button');
@@ -603,6 +610,7 @@ function handle_save(outfile, json, rm_root, sections) {
  *   'filename' => Base name of the file (for printing)
  *   'savefile' => Full path to the save file
  *   'rm_root'  => Root RPGMaker directory path
+ *   'json_txt' => Original JSON text from the save file
  *   'object'   => Parsed JSON object
  */
 function handle_file_load(filename, context_obj) {
@@ -622,6 +630,7 @@ function handle_file_load(filename, context_obj) {
 	fdata['filename'] = filename;
 	fdata['savefile'] = context_obj['savefile'];
 	fdata['rm_root'] = context_obj['rm_root'];
+	fdata['json_txt'] = json_txt; // Store original JSON for dumping
 	fdata['object'] = JSON.parse(json_txt);
 
 	let sections = build_sections(fdata['object'], context_obj);
