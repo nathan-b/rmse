@@ -687,14 +687,15 @@ function handle_save(outfile, json, rm_root, sections, fdata) {
 	});
 
 	// Now save the json
-	window.ipc_bridge.save_file(outfile, JSON.stringify(json), rm_root, (status) => {
+	window.ipc_bridge.save_file(outfile, JSON.stringify(json), rm_root, async (status) => {
 		if (status.length > 0) {
 			set_text('status', 'Saved ' + status);
 			// Refresh backup UI immediately after save
 			// Update fdata with the saved file path (in case of "Save as...")
 			const saved_fdata = {
 				...fdata,
-				savefile: status
+				savefile: status,
+				filename: await window.ipc_bridge.basename(status)
 			};
 			load_backup_ui(saved_fdata);
 		} else {

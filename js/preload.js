@@ -1,6 +1,12 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
-const path_basename = (p) => p.substring(p.lastIndexOf(webUtils.getPathForFile.sep) + 1);
+const path_basename = (p) => {
+	// Extract just the filename from a path
+	// Works for both Unix and Windows paths
+	const normalized = p.replace(/\\/g, '/');
+	const parts = normalized.split('/');
+	return parts[parts.length - 1];
+};
 
 // Set up APIs for sandboxed environment
 contextBridge.exposeInMainWorld('ipc_bridge', {
@@ -33,6 +39,9 @@ contextBridge.exposeInMainWorld('ipc_bridge', {
 	},
 	clear_backups: async (file_path) => {
 		return await ipcRenderer.invoke('clear_backups', file_path);
+	},
+	basename: async (file_path) => {
+		return await ipcRenderer.invoke('basename', file_path);
 	},
 	version: () => {
 		return ipcRenderer.sendSync('get_version');

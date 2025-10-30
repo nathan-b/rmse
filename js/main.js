@@ -134,6 +134,10 @@ ipcMain.handle('clear_backups', async (event, file_path) => {
 	}
 });
 
+ipcMain.handle('basename', async (event, file_path) => {
+	return path.basename(file_path);
+});
+
 // Entrypoint
 app.whenReady().then(() => {
 	createWindow();
