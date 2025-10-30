@@ -93,9 +93,13 @@ class value_item {
  * then writing to the JSON object representing the savefile.
  */
 class character_item {
-	constructor(actor, context) {
+	constructor(actor, context, actors_data, classes_data) {
 		this.actor = actor;
 		this.ctx = context;
+		this.actors_data = actors_data;
+		this.classes_data = classes_data;
+		// Extract the actual array from _paramPlus (which may be wrapped in RM format)
+		this.paramPlus = get_rm_arr(actor, '_paramPlus');
 	}
 
 	create_DOM() {
@@ -107,7 +111,61 @@ class character_item {
 		header.textContent = this.actor._name;
 		parent.appendChild(header);
 
-		// These three values are the current levels
+		// Experience field (appears first, before HP/MP/TP)
+		if (this.ctx.exp) {
+			let exp_div = document.createElement('div');
+			exp_div.classList.add('item');
+			exp_div.classList.add('character-item');
+
+			let exp_label = document.createElement('p');
+			exp_label.classList.add('label');
+			exp_label.textContent = this.ctx.exp.name;
+			exp_div.appendChild(exp_label);
+
+			let exp_input = document.createElement('input');
+			exp_input.setAttribute('type', 'text');
+			exp_input.classList.add('value');
+			// Get XP for the actor's current class
+			exp_input.value = this.actor._exp[this.actor._classId] || 0;
+			exp_div.appendChild(exp_input);
+
+			parent.appendChild(exp_div);
+
+			this.ctx.exp['elem'] = exp_input;
+
+			// Display next level XP as a separate read-only line
+			if (this.actors_data && this.classes_data && this.actor._actorId) {
+				const actor_data = this.actors_data[this.actor._actorId];
+				if (actor_data && actor_data.classId) {
+					const class_data = this.classes_data[actor_data.classId];
+					if (class_data && class_data.expParams) {
+						const next_level_xp = exp_for_level(
+							this.actor._level + 1,
+							class_data.expParams
+						);
+
+						let next_level_div = document.createElement('div');
+						next_level_div.classList.add('item');
+						next_level_div.classList.add('character-item');
+
+						let next_level_label = document.createElement('p');
+						next_level_label.classList.add('label');
+						next_level_label.textContent = 'Next level';
+						next_level_div.appendChild(next_level_label);
+
+						let next_level_value = document.createElement('p');
+						next_level_value.classList.add('value');
+						next_level_value.textContent = next_level_xp;
+						next_level_value.style.lineHeight = '2em';
+						next_level_div.appendChild(next_level_value);
+
+						parent.appendChild(next_level_div);
+					}
+				}
+			}
+		}
+
+		// These three values are the current levels (HP, MP, TP)
 		Object.entries(this.ctx.current).forEach((entry) => {
 			let [idx, value] = entry;
 			let subvalue = document.createElement('div');
@@ -144,7 +202,7 @@ class character_item {
 			let subinput = document.createElement('input');
 			subinput.setAttribute('type', 'text');
 			subinput.classList.add('value');
-			subinput.value = this.actor._paramPlus[idx];
+			subinput.value = this.paramPlus[idx];
 			subvalue.appendChild(subinput);
 
 			parent.appendChild(subvalue);
@@ -156,24 +214,38 @@ class character_item {
 	}
 
 	update_value() {
+		// Update experience
+		if (this.ctx.exp && this.ctx.exp['elem']) {
+			this.actor._exp[this.actor._classId] = Number(this.ctx.exp['elem'].value);
+		}
+
+		// Update current stats (HP, MP, TP)
 		Object.entries(this.ctx.current).forEach((entry) => {
 			let [idx, value] = entry;
 			this.actor[idx] = Number(value['elem'].value);
 		});
 
+		// Update static params (Max HP, Attack, etc.)
 		this.ctx.static.forEach((value, idx) => {
-			this.actor._paramPlus[idx] = Number(value['elem'].value);
+			this.paramPlus[idx] = Number(value['elem'].value);
 		});
 	}
 
 	reset_value() {
+		// Reset experience
+		if (this.ctx.exp && this.ctx.exp['elem']) {
+			this.ctx.exp['elem'].value = this.actor._exp[this.actor._classId] || 0;
+		}
+
+		// Reset current stats (HP, MP, TP)
 		Object.entries(this.ctx.current).forEach((entry) => {
 			let [idx, value] = entry;
 			value['elem'].value = this.actor[idx];
 		});
 
+		// Reset static params (Max HP, Attack, etc.)
 		this.ctx.static.forEach((value, idx) => {
-			value['elem'].value = this.actor._paramPlus[idx];
+			value['elem'].value = this.paramPlus[idx];
 		});
 	}
 }
@@ -303,12 +375,37 @@ function build_item_table(json) {
 	return item_table;
 }
 
+/**
+ * Calculate experience points required for a given level using RPGMaker formula
+ * @param {number} level - The level to calculate XP for
+ * @param {Array} expParams - [basis, extra, acc_a, acc_b] from Classes.json
+ * @returns {number} Experience points required for that level
+ */
+function exp_for_level(level, expParams) {
+	const basis = expParams[0];
+	const extra = expParams[1];
+	const acc_a = expParams[2];
+	const acc_b = expParams[3];
+	return Math.round(
+		basis *
+			Math.pow(level - 1, 0.9 + acc_a / 250) *
+			level *
+			(level + 1) /
+			(6 + Math.pow(level, 2) / 50 / acc_b) +
+			(level - 1) * extra
+	);
+}
+
 function build_attribute_context() {
 	let ctx = {
 		static: [],
-		current: {}
+		current: {},
+		exp: {}
 	};
 
+	ctx.exp = {
+		name: 'Current XP'
+	};
 	ctx.current['_hp'] = {
 		name: 'Current HP'
 	};
@@ -491,10 +588,15 @@ function build_sections(json, context) {
 		let party = new section('Characters');
 		// Build the character sections for every character in the party
 		let party_actors = get_rm_arr(json['party'], '_actors');
+		// Parse Actors.json and Classes.json if available
+		let actors_data = context['actors'] ? JSON.parse(context['actors']) : null;
+		let classes_data = context['classes'] ? JSON.parse(context['classes']) : null;
 		party_actors.forEach((actor_idx) => {
 			let party_ctx = build_attribute_context(); // Performs the mapping described above
 			let actor_arr = get_rm_arr(json['actors'], '_data');
-			party.add_item(new character_item(actor_arr[actor_idx], party_ctx));
+			party.add_item(
+				new character_item(actor_arr[actor_idx], party_ctx, actors_data, classes_data)
+			);
 		});
 		sections.push(party);
 
