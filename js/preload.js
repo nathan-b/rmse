@@ -25,6 +25,15 @@ contextBridge.exposeInMainWorld('ipc_bridge', {
 			callback(result);
 		});
 	},
+	get_backup_info: async (file_path) => {
+		return await ipcRenderer.invoke('get_backup_info', file_path);
+	},
+	restore_backup: async (backup_path, save_path) => {
+		return await ipcRenderer.invoke('restore_backup', backup_path, save_path);
+	},
+	clear_backups: async (file_path) => {
+		return await ipcRenderer.invoke('clear_backups', file_path);
+	},
 	version: () => {
 		return ipcRenderer.sendSync('get_version');
 	}

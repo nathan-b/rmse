@@ -536,14 +536,14 @@ function build_palette(sections, fdata) {
 	savebtn.textContent = 'Overwrite ' + fdata['filename'];
 	savebtn.classList.add('palette-button');
 	savebtn.onclick = (event) => {
-		handle_save(fdata['savefile'], fdata['object'], fdata['rm_root'], sections);
+		handle_save(fdata['savefile'], fdata['object'], fdata['rm_root'], sections, fdata);
 	};
 
 	let saveasbtn = document.createElement('button');
 	saveasbtn.textContent = 'Save as...';
 	saveasbtn.classList.add('palette-button');
 	saveasbtn.onclick = (event) => {
-		handle_save('', fdata['object'], fdata['rm_root'], sections);
+		handle_save('', fdata['object'], fdata['rm_root'], sections, fdata);
 	};
 
 	let jdumpbtn = document.createElement('button');
@@ -566,6 +566,107 @@ function build_palette(sections, fdata) {
 	palette.appendChild(saveasbtn);
 	palette.appendChild(jdumpbtn);
 	palette.appendChild(resetbtn);
+
+	// Add backup UI to the upper right area - will be populated asynchronously
+	load_backup_ui(fdata);
+}
+
+async function load_backup_ui(fdata) {
+	const backup_ui = document.getElementById('backup_ui');
+
+	// Clear any existing backup UI
+	backup_ui.innerHTML = '';
+
+	try {
+		const backups = await window.ipc_bridge.get_backup_info(fdata['savefile']);
+
+		if (backups.length === 0) {
+			return; // No backups, don't show UI
+		}
+
+		// Create a container for backup controls
+		const backup_container = document.createElement('div');
+		backup_container.classList.add('backup-controls');
+
+		// Create dropdown for backup selection
+		const backup_select = document.createElement('select');
+		backup_select.classList.add('backup-select');
+
+		// Add backups to dropdown
+		backups.forEach((backup) => {
+			const option = document.createElement('option');
+			option.value = backup.path;
+			const date = new Date(backup.created);
+			option.textContent = `${date.toLocaleString()} (${format_size(backup.size)})`;
+			backup_select.appendChild(option);
+		});
+
+		// Create restore button
+		const restore_btn = document.createElement('button');
+		restore_btn.textContent = 'Restore backup';
+		restore_btn.classList.add('palette-button');
+		restore_btn.onclick = async (event) => {
+			const selected_backup = backup_select.value;
+			if (!selected_backup) {
+				set_text('statustext', 'No backup selected');
+				return;
+			}
+
+			if (
+				confirm(
+					'Restore from backup? This will reload the file from the selected backup.'
+				)
+			) {
+				set_text('statustext', 'Restoring from backup...');
+				const result = await window.ipc_bridge.restore_backup(
+					selected_backup,
+					fdata['savefile']
+				);
+
+				if (result.success) {
+					set_text('statustext', 'Backup restored successfully. Reloading...');
+					// Reload the file
+					setTimeout(() => {
+						window.ipc_bridge.load_file(fdata['savefile'], handle_file_load);
+					}, 500);
+				} else {
+					set_text('statustext', 'Failed to restore backup: ' + result.error);
+				}
+			}
+		};
+
+		// Create clear backups button
+		const clear_btn = document.createElement('button');
+		clear_btn.textContent = 'Clear all backups';
+		clear_btn.classList.add('palette-button');
+		clear_btn.onclick = async (event) => {
+			if (confirm(`Delete all ${backups.length} backup(s)? This cannot be undone.`)) {
+				set_text('statustext', 'Clearing backups...');
+				const result = await window.ipc_bridge.clear_backups(fdata['savefile']);
+
+				if (result.success) {
+					set_text('statustext', `Deleted ${result.count} backup(s)`);
+					// Remove backup UI from palette
+					backup_container.remove();
+				} else {
+					set_text('statustext', 'Failed to clear backups: ' + result.error);
+				}
+			}
+		};
+
+		backup_container.appendChild(backup_select);
+		backup_container.appendChild(restore_btn);
+		backup_container.appendChild(clear_btn);
+		backup_ui.appendChild(backup_container);
+	} catch (err) {
+		console.error('Error loading backup UI:', err);
+	}
+}
+
+function format_size(bytes) {
+	if (bytes < 1024) return bytes + ' B';
+	else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+	else return (bytes / 1048576).toFixed(1) + ' MB';
 }
 
 function dump_json(obj, rm_root) {
@@ -578,7 +679,7 @@ function dump_json(obj, rm_root) {
 	});
 }
 
-function handle_save(outfile, json, rm_root, sections) {
+function handle_save(outfile, json, rm_root, sections, fdata) {
 	set_text('status', 'Saving ' + outfile);
 	// This will update the json object to contain the new values
 	sections.forEach((section) => {
@@ -589,6 +690,13 @@ function handle_save(outfile, json, rm_root, sections) {
 	window.ipc_bridge.save_file(outfile, JSON.stringify(json), rm_root, (status) => {
 		if (status.length > 0) {
 			set_text('status', 'Saved ' + status);
+			// Refresh backup UI immediately after save
+			// Update fdata with the saved file path (in case of "Save as...")
+			const saved_fdata = {
+				...fdata,
+				savefile: status
+			};
+			load_backup_ui(saved_fdata);
 		} else {
 			set_text('status', 'Error saving ' + outfile);
 		}

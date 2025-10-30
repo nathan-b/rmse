@@ -102,6 +102,38 @@ ipcMain.handle('dump_json', async (event, json_str, rm_root) => {
 	return file_path;
 });
 
+ipcMain.handle('get_backup_info', async (event, file_path) => {
+	try {
+		return await rm_loader.backup.backup_info(file_path);
+	} catch (err) {
+		console.error('Error getting backup info:', err);
+		return [];
+	}
+});
+
+ipcMain.handle('restore_backup', async (event, backup_path, save_path) => {
+	try {
+		await rm_loader.backup.restore_backup(backup_path, save_path);
+		return { success: true };
+	} catch (err) {
+		console.error('Error restoring backup:', err);
+		return { success: false, error: err.message };
+	}
+});
+
+ipcMain.handle('clear_backups', async (event, file_path) => {
+	try {
+		const backups = await rm_loader.backup.get_backups(file_path);
+		for (const backup_path of backups) {
+			await fsprom.unlink(backup_path);
+		}
+		return { success: true, count: backups.length };
+	} catch (err) {
+		console.error('Error clearing backups:', err);
+		return { success: false, error: err.message };
+	}
+});
+
 // Entrypoint
 app.whenReady().then(() => {
 	createWindow();

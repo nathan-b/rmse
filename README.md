@@ -59,7 +59,21 @@ likelihood of messing up your save in some way. Use with caution, and maintain b
 
 ## Saving the file
 
-You can either overwrite the file you just loaded or save the file under a new name. For backup purposes, it's a good idea to create a new file when you're first editing, in case something goes wrong.
+You can either overwrite the file you just loaded or save the file under a new name.
+
+### Automatic backups
+
+RMSE automatically creates a backup of your save file before overwriting it. Backups are stored in a `.rmse_backups` folder next to your save files. The 5 most recent backups are kept, and older backups are automatically deleted. This protects you from accidental data loss.
+
+### Restoring from backup
+
+If backups exist for the current save file, backup controls will appear in the upper right corner of the window. You can:
+
+- **Select a backup** from the dropdown to see when it was created and its file size
+- **Click "Restore backup"** to restore the selected backup. This will reload the file with the backup's contents.
+- **Click "Clear all backups"** to delete all backups for this save file (this cannot be undone)
+
+The backup dropdown only appears when backups are available.
 
 ### Dumping raw JSON
 

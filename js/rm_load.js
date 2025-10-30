@@ -1,6 +1,7 @@
 const fs = require('fs');
 const fsprom = fs.promises;
 const path = require('path');
+const backup = require('./backup.js');
 
 class null_codec {
 	constructor(rm_root) {
@@ -183,6 +184,12 @@ async function save(file_path, json_str, rm_root) {
 	let strdata = codec.encode(json_str);
 
 	try {
+		// Create backup before overwriting
+		const backupPath = await backup.create_backup(file_path);
+		if (backupPath) {
+			console.log(`Backup created at: ${backupPath}`);
+		}
+
 		await fsprom.writeFile(file_path, strdata);
 	} catch (err) {
 		console.log('Error saving file ' + file_path + ': ' + err);
@@ -194,3 +201,4 @@ async function save(file_path, json_str, rm_root) {
 exports.load = load;
 exports.save = save;
 exports.get_rm_root = get_rm_root;
+exports.backup = backup;

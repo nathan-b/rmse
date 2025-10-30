@@ -17,3 +17,6 @@ node_modules
 # Test coverage
 coverage/
 
+# Backup files (created by auto-backup feature)
+.rmse_backups/
+
