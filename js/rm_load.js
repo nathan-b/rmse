@@ -131,9 +131,17 @@ function get_context(file_path) {
 	let maindir = path.dirname(savedir);
 	let datadir = path.join(maindir, 'data');
 	if (!fs.existsSync(datadir)) {
-		console.error('Could not find data dir for ' + file_path);
-		return {};
+		console.warn('Could not find data dir for ' + file_path + ' in ' + datadir);
+		// check secondary location
+		datadir = path.join(maindir, 'www', 'data');
+		if (!fs.existsSync(datadir)) {
+			console.error('Could not find data dir for ' + file_path + ' in ' + datadir);
+			console.error('Giving up attempt to locate data directory.');
+			return {};
+		}
 	}
+
+	console.info('Data dir: ' + datadir);
 
 	// Load the context
 	let context_files = {
@@ -143,18 +151,22 @@ function get_context(file_path) {
 		variables: path.join(datadir, 'System.json')
 	};
 
-	Object.entries(context_files).forEach((entry) => {
-		let [key, filepath] = entry;
-		if (fs.existsSync(filepath)) {
-			try {
-				context[key] = fs.readFileSync(filepath, {
-					encoding: 'utf-8'
-				});
-			} catch (err) {
-				console.error(`Failed to read context file ${filepath}: ${err.message}`);
-				// Continue loading other context files
-			}
+	Object.entries(context_files).forEach(([key, filepath]) => {
+		process.stdout.write('Loading... ' + filepath);
+
+		if (!fs.existsSync(filepath)) {
+			console.warn('Missing context file ${filepath}, skipping.');
+			return; // skip this entry
 		}
+
+		try {
+			context[key] = fs.readFileSync(filepath, { encoding: 'utf-8' });
+		} catch (err) {
+			console.error('Failed to read context file ${filepath}: ${err.message}');
+			return; // skip success message
+		}
+
+		console.info('... success');
 	});
 
 	return context;
