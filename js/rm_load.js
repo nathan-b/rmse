@@ -166,7 +166,7 @@ function get_context(file_path) {
 			return; // skip success message
 		}
 
-		console.info('... success');
+		console.debug('... success');
 	});
 
 	return context;
