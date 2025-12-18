@@ -152,7 +152,7 @@ function get_context(file_path) {
 	};
 
 	Object.entries(context_files).forEach(([key, filepath]) => {
-		process.stdout.write('Loading... ' + filepath);
+		console.debug('Loading... ' + filepath);
 
 		if (!fs.existsSync(filepath)) {
 			console.warn('Missing context file ${filepath}, skipping.');
