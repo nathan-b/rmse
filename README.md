@@ -1,6 +1,6 @@
 # RPGMaker Save Editor
 
-This is a tool for editing RPGMaker save files. It currently supports save files written by RPG Maker MZ (.rmmzsave), but support for other versions of RPGMaker is planned for the future.
+This is a tool for editing RPGMaker save files. It should support save files written by both RPG Maker MV and MZ. Support for older versions is not planned.
 
 It uses Node.js for the backend and Electron for the GUI, which means you can interact with it using `npm`.
 
