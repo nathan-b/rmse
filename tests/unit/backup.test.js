@@ -3,6 +3,17 @@ const fsprom = fs.promises;
 const path = require('path');
 const backup = require('../../js/backup.js');
 
+// Suppress console output during tests
+beforeAll(() => {
+	jest.spyOn(console, 'log').mockImplementation(() => {});
+	jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
+afterAll(() => {
+	console.log.mockRestore();
+	console.error.mockRestore();
+});
+
 describe('Backup module', () => {
 	const testDir = path.join(__dirname, '../fixtures/backup_test');
 	const testFile = path.join(testDir, 'test.rmmzsave');

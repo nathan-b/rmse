@@ -86,6 +86,15 @@ function get_rm_root(curr_path) {
 		return curr_path;
 	}
 
+	// This solution was suggested by Galactic647 on GitHub
+	if (fs.existsSync(path.join(curr_path, 'data', 'System.json'))) {
+		if (curr_path.endsWith('www')) {
+			return path.dirname(curr_path);
+		} else {
+			return curr_path;
+		}
+	}
+
 	let updir = path.dirname(curr_path);
 	if (updir === curr_path) {
 		// End the recursion

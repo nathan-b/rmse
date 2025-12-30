@@ -131,13 +131,6 @@ describe('rm_load module', () => {
 		beforeEach(() => {
 			jest.clearAllMocks();
 		});
-
-		// Note: Full save testing is covered by integration tests
-		// This test is skipped because mocking fs.promises after module load doesn't work
-		test.skip('should save json file successfully', async () => {
-			// This functionality is tested in integration/file_operations.test.js
-		});
-
 		test('should return empty string on write error', async () => {
 			const testData = '{"test": "data"}';
 
