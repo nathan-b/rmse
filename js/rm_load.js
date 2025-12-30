@@ -15,7 +15,8 @@ class null_codec {
 			});
 			return json;
 		} catch (err) {
-			throw new Error(`Failed to read save file: ${err.message}`);
+			const error_msg = err?.message || err?.toString() || String(err);
+			throw new Error(`Failed to read save file: ${error_msg}`);
 		}
 	}
 
@@ -26,33 +27,97 @@ class null_codec {
 
 class pako_codec {
 	constructor(pako_path) {
-		this.pako = require(pako_path);
+		try {
+			this.pako = require(pako_path);
+			if (!this.pako || typeof this.pako.inflate !== 'function') {
+				throw new Error(`Pako library loaded but inflate function not found`);
+			}
+			this.use_utf8_format = false; // Track which format is being used
+		} catch (err) {
+			throw new Error(
+				`Failed to load pako library from ${pako_path}: ${err?.message || err}`
+			);
+		}
 	}
 
-	decode(savefile_path) {
+	rmmv_decode(savefile_path) {
+		// RPG Maker MV writes binary compressed data
 		try {
-			// Pako expects binary data
 			const zipdata = fs.readFileSync(savefile_path);
 			const json = this.pako.inflate(zipdata, {
 				to: 'string'
 			});
+			this.use_utf8_format = false;
 			return json;
 		} catch (err) {
-			throw new Error(`Failed to decompress save file: ${err.message}`);
+			const error_msg = err?.message || err?.toString() || String(err);
+			const error_code = err?.code || 'unknown';
+			throw new Error(
+				`Failed to decompress save file (RMMV method): ${error_msg} (code: ${error_code})`
+			);
 		}
 	}
 
+	rmmz_decode(savefile_path) {
+		// RPG Maker MZ writes compressed binary data as UTF-8 string (for some reason)
+		try {
+			const zipdata_utf8 = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
+			const json = this.pako.inflate(zipdata_utf8, { to: 'string' });
+			this.use_utf8_format = true;
+			return json;
+		} catch (err) {
+			const error_msg = err?.message || err?.toString() || String(err);
+			const error_code = err?.code || 'unknown';
+			throw new Error(
+				`Failed to decompress save file (RMMZ method): ${error_msg} (code: ${error_code})`
+			);
+		}
+	}
+
+	decode(savefile_path) {
+		try {
+			if (path.extname(savefile_path) === '.rmmzsave') {
+				return this.rmmz_decode(savefile_path);
+			}
+		} catch (err) {
+			console.warn(
+				`Failed to decode as RMMZ save file, trying RMMV method: ${err?.message || err}`
+			);
+		}
+		return this.rmmv_decode(savefile_path);
+	}
+
 	encode(json_str) {
-		return this.pako.deflate(json_str, {
+		const compressed = this.pako.deflate(json_str, {
 			to: 'string',
 			level: 1
 		});
+
+		// If the file was loaded using UTF-8 format (MZ), keep it in that format
+		// Otherwise return binary Buffer (MV)
+		if (this.use_utf8_format) {
+			return compressed; // Return as string for UTF-8 encoding
+		} else {
+			// Convert string to Buffer for binary writing
+			return Buffer.from(compressed, 'binary');
+		}
 	}
 }
 
 class lz_codec {
 	constructor(lz_path) {
-		this.lzstring = require(lz_path);
+		try {
+			this.lzstring = require(lz_path);
+			if (!this.lzstring || typeof this.lzstring.decompressFromBase64 !== 'function') {
+				throw new Error(
+					`LZ-String library loaded but decompressFromBase64 function not found`
+				);
+			}
+		} catch (err) {
+			throw new Error(
+				`Failed to load lz-string library from ${lz_path}: ${err?.message || err}`
+			);
+		}
 	}
 
 	decode(savefile_path) {
@@ -63,7 +128,9 @@ class lz_codec {
 			const json = this.lzstring.decompressFromBase64(zipdata);
 			return json;
 		} catch (err) {
-			throw new Error(`Failed to decompress save file: ${err.message}`);
+			const error_msg = err?.message || err?.toString() || String(err);
+			const error_code = err?.code || 'unknown';
+			throw new Error(`Failed to decompress save file: ${error_msg} (code: ${error_code})`);
 		}
 	}
 
@@ -163,7 +230,7 @@ function get_context(file_path) {
 	};
 
 	Object.entries(context_files).forEach(([key, filepath]) => {
-		console.debug('Loading... ' + filepath);
+		console.debug(`Loading ${filepath}...`);
 
 		if (!fs.existsSync(filepath)) {
 			console.warn(`Missing context file ${filepath}, skipping.`);
@@ -177,7 +244,7 @@ function get_context(file_path) {
 			return; // skip success message
 		}
 
-		console.debug('... success');
+		console.debug('Success');
 	});
 
 	return context;
