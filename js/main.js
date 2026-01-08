@@ -41,9 +41,9 @@ function getWindow() {
 }
 
 // Message handlers
-ipcMain.handle('load_file', async (event, file_path) => {
+ipcMain.handle('load_file', async (event, file_path, manual_game_dir) => {
 	try {
-		return rm_loader.load(file_path);
+		return rm_loader.load(file_path, manual_game_dir || '');
 	} catch (err) {
 		console.error('Error loading file:', err);
 		return { error: err.message };
@@ -68,18 +68,29 @@ ipcMain.handle('save_file', async (event, file_path, json_str, rm_root) => {
 	return await rm_loader.save(file_path, json_str, rm_root);
 });
 
-ipcMain.handle('open_file', async (event) => {
+ipcMain.handle('open_file', async (event, manual_game_dir) => {
 	const result = dialog.showOpenDialogSync(getWindow(), {
 		title: 'Select a file to open',
 		properties: ['openFile']
 	});
 	if (result && result.length > 0) {
 		try {
-			return rm_loader.load(result[0]);
+			return rm_loader.load(result[0], manual_game_dir || '');
 		} catch (err) {
 			console.error('Error loading file:', err);
 			return { error: err.message };
 		}
+	}
+	return null;
+});
+
+ipcMain.handle('select_game_dir', async (event) => {
+	const result = dialog.showOpenDialogSync(getWindow(), {
+		title: 'Select RPG Maker Game Directory',
+		properties: ['openDirectory']
+	});
+	if (result && result.length > 0) {
+		return result[0];
 	}
 	return null;
 });

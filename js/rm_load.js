@@ -197,21 +197,19 @@ function build_codec(file_path, rm_root) {
  * directory. This function will pull those files and pass them with the
  * savefile data.
  */
-function get_context(file_path) {
+function get_context(file_path, rm_root) {
 	let context = {
 		savefile: file_path
 	};
 
-	// Find the data directory
-	let savedir = path.dirname(file_path);
-	let maindir = path.dirname(savedir);
-	let datadir = path.join(maindir, 'data');
+	// Find the data directory using rm_root
+	let datadir = path.join(rm_root, 'data');
 	if (!fs.existsSync(datadir)) {
-		console.warn('Could not find data dir for ' + file_path + ' in ' + datadir);
+		console.warn('Could not find data dir in ' + datadir);
 		// check secondary location
-		datadir = path.join(maindir, 'www', 'data');
+		datadir = path.join(rm_root, 'www', 'data');
 		if (!fs.existsSync(datadir)) {
-			console.error('Could not find data dir for ' + file_path + ' in ' + datadir);
+			console.error('Could not find data dir in ' + datadir);
 			console.error('Giving up attempt to locate data directory.');
 			return {};
 		}
@@ -250,10 +248,19 @@ function get_context(file_path) {
 	return context;
 }
 
-function load(file_path) {
-	let rm_root = get_rm_root(file_path);
-	if (rm_root === null) {
-		throw new Error('Could not find RPGMaker root directory');
+function load(file_path, manual_game_dir) {
+	let rm_root = null;
+
+	// Use manually provided directory if available, otherwise auto-detect
+	if (manual_game_dir && manual_game_dir.length > 0) {
+		rm_root = manual_game_dir;
+		console.log('Using manually selected game directory: ' + rm_root);
+	} else {
+		rm_root = get_rm_root(file_path);
+		if (rm_root === null) {
+			throw new Error('Could not find RPGMaker root directory');
+		}
+		console.log('Auto-detected game directory: ' + rm_root);
 	}
 
 	let codec = build_codec(file_path, rm_root);
@@ -262,7 +269,7 @@ function load(file_path) {
 	}
 
 	let json = codec.decode(file_path);
-	let context = get_context(file_path);
+	let context = get_context(file_path, rm_root);
 
 	context['json_txt'] = json;
 	context['rm_root'] = rm_root;

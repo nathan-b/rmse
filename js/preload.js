@@ -11,14 +11,19 @@ const path_basename = (p) => {
 // Set up APIs for sandboxed environment
 contextBridge.exposeInMainWorld('ipc_bridge', {
 	path_for_file: (file) => webUtils.getPathForFile(file),
-	load_file: (file_path, callback) => {
-		ipcRenderer.invoke('load_file', file_path).then((result) => {
+	load_file: (file_path, manual_game_dir, callback) => {
+		ipcRenderer.invoke('load_file', file_path, manual_game_dir).then((result) => {
 			callback(path_basename(file_path), result);
 		});
 	},
-	open_file: (callback) => {
-		ipcRenderer.invoke('open_file').then((result) => {
+	open_file: (manual_game_dir, callback) => {
+		ipcRenderer.invoke('open_file', manual_game_dir).then((result) => {
 			callback(path_basename(result.savefile), result);
+		});
+	},
+	select_game_dir: (callback) => {
+		ipcRenderer.invoke('select_game_dir').then((result) => {
+			callback(result);
 		});
 	},
 	save_file: (file_path, json_str, rm_root, callback) => {

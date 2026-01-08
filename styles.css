@@ -17,6 +17,22 @@ p.droptext {
 	background-color: inherit;
 }
 
+div.manual-dir-controls {
+	text-align: center;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+button.game-dir-button {
+	padding: 8px 16px;
+	margin-right: 10px;
+}
+
+span.selected-dir {
+	font-size: 12px;
+	color: gray;
+}
+
 p.label {
 	text-align: right;
 }

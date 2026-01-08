@@ -1,5 +1,8 @@
 // Runs in sandbox
 
+// Global state for manually selected game directory
+let manual_game_dir = '';
+
 // Set the text of the given element
 function set_text(selector, text) {
 	const element = document.getElementById(selector);
@@ -729,7 +732,7 @@ async function load_backup_ui(fdata) {
 					set_text('statustext', 'Backup restored successfully. Reloading...');
 					// Reload the file
 					setTimeout(() => {
-						window.ipc_bridge.load_file(fdata['savefile'], handle_file_load);
+						window.ipc_bridge.load_file(fdata['savefile'], manual_game_dir, handle_file_load);
 					}, 500);
 				} else {
 					set_text('statustext', 'Failed to restore backup: ' + result.error);
@@ -883,6 +886,10 @@ function handle_file_load(filename, context_obj) {
 function hide_dropzone() {
 	const dz = document.getElementById('receive_file');
 	dz.classList.add('dropzone-hidden');
+	const manual_controls = document.getElementById('manual_dir_controls');
+	if (manual_controls) {
+		manual_controls.style.display = 'none';
+	}
 }
 
 // Handlers for drag 'n' drop
@@ -895,7 +902,7 @@ function drop_handler(ev) {
 			};
 
 			set_text('status', 'Loading file ' + file.path);
-			window.ipc_bridge.load_file(file.path, handle_file_load);
+			window.ipc_bridge.load_file(file.path, manual_game_dir, handle_file_load);
 		}
 	}
 }
@@ -906,7 +913,16 @@ function drag_handler(ev) {
 }
 
 function click_handler(ev) {
-	window.ipc_bridge.open_file(handle_file_load);
+	window.ipc_bridge.open_file(manual_game_dir, handle_file_load);
+}
+
+function game_dir_handler(ev) {
+	window.ipc_bridge.select_game_dir((dir_path) => {
+		if (dir_path) {
+			manual_game_dir = dir_path;
+			set_text('selected_dir', 'Game dir: ' + dir_path);
+		}
+	});
 }
 
 window.addEventListener('DOMContentLoaded', (event) => {
@@ -915,6 +931,10 @@ window.addEventListener('DOMContentLoaded', (event) => {
 	dropzone.addEventListener('drop', drop_handler);
 	dropzone.addEventListener('dragover', drag_handler);
 	dropzone.addEventListener('click', click_handler);
+
+	// Enable manual game directory selection
+	let dir_btn = document.getElementById('dir_button');
+	dir_btn.addEventListener('click', game_dir_handler);
 
 	// Write the footer
 	const version = window.ipc_bridge.version();
