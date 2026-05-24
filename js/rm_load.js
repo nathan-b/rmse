@@ -278,6 +278,9 @@ function load(file_path, manual_game_dir) {
 
 async function save(file_path, json_str, rm_root) {
 	let codec = build_codec(file_path, rm_root);
+	if (path.extname(file_path) === '.rmmzsave') {
+		codec.use_utf8_format = true;
+	}
 	let strdata = codec.encode(json_str);
 
 	try {
