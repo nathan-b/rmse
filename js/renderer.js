@@ -2,9 +2,14 @@
 
 // Global state for manually selected game directory
 let manual_game_dir = '';
+let backup_ui_generation = 0;
 
 // Set the text of the given element
 function set_text(selector, text) {
+	// Legacy callers use "status" for the status line inside #statustext
+	if (selector === 'status') {
+		selector = 'statustext';
+	}
 	const element = document.getElementById(selector);
 	if (element) element.innerText = text;
 	else console.log('Bad did happen');
@@ -622,6 +627,39 @@ function build_sections(json, context) {
 	return sections;
 }
 
+async function confirm_discard_edits(actionLabel) {
+	return window.ipc_bridge.confirm_dialog({
+		message: 'Unsaved changes in the editor will be lost.',
+		detail: actionLabel + ' anyway?'
+	});
+}
+
+async function app_confirm(message, detail = '') {
+	return window.ipc_bridge.confirm_dialog({ message, detail });
+}
+
+function restore_window_focus() {
+	void window.ipc_bridge.focus_window();
+}
+
+function reload_current_save(fdata, delayMs = 0) {
+	const do_reload = () => {
+		window.ipc_bridge.load_file(fdata['savefile'], manual_game_dir, handle_file_load);
+	};
+	if (delayMs > 0) {
+		setTimeout(do_reload, delayMs);
+	} else {
+		do_reload();
+	}
+}
+
+async function open_another_file() {
+	if (!(await confirm_discard_edits('Open another file'))) {
+		return;
+	}
+	window.ipc_bridge.open_file(manual_game_dir, handle_file_load);
+}
+
 /**
  * The "palette" is the floating div containing the buttons the user can use to
  * (for example) save changes and otherwise interact with the system.
@@ -636,6 +674,25 @@ function build_sections(json, context) {
  */
 function build_palette(sections, fdata) {
 	let palette = document.getElementById('palette');
+
+	let reloadbtn = document.createElement('button');
+	reloadbtn.textContent = 'Reload from disk';
+	reloadbtn.classList.add('palette-button');
+	reloadbtn.disabled = !fdata['savefile'];
+	reloadbtn.onclick = async () => {
+		if (!(await confirm_discard_edits('Reload from disk'))) {
+			return;
+		}
+		set_text('statustext', 'Reloading from disk...');
+		reload_current_save(fdata);
+	};
+
+	let openbtn = document.createElement('button');
+	openbtn.textContent = 'Open another file...';
+	openbtn.classList.add('palette-button');
+	openbtn.onclick = async () => {
+		await open_another_file();
+	};
 
 	let savebtn = document.createElement('button');
 	savebtn.textContent = 'Overwrite ' + fdata['filename'];
@@ -667,6 +724,8 @@ function build_palette(sections, fdata) {
 		});
 	};
 
+	palette.appendChild(reloadbtn);
+	palette.appendChild(openbtn);
 	palette.appendChild(savebtn);
 	palette.appendChild(saveasbtn);
 	palette.appendChild(jdumpbtn);
@@ -678,12 +737,17 @@ function build_palette(sections, fdata) {
 
 async function load_backup_ui(fdata) {
 	const backup_ui = document.getElementById('backup_ui');
+	const generation = ++backup_ui_generation;
 
 	// Clear any existing backup UI
 	backup_ui.innerHTML = '';
 
 	try {
 		const backups = await window.ipc_bridge.get_backup_info(fdata['savefile']);
+
+		if (generation !== backup_ui_generation) {
+			return;
+		}
 
 		if (backups.length === 0) {
 			return; // No backups, don't show UI
@@ -718,8 +782,9 @@ async function load_backup_ui(fdata) {
 			}
 
 			if (
-				confirm(
-					'Restore from backup? This will reload the file from the selected backup.'
+				await app_confirm(
+					'Restore from backup?',
+					'This will reload the file from the selected backup.'
 				)
 			) {
 				set_text('statustext', 'Restoring from backup...');
@@ -730,10 +795,7 @@ async function load_backup_ui(fdata) {
 
 				if (result.success) {
 					set_text('statustext', 'Backup restored successfully. Reloading...');
-					// Reload the file
-					setTimeout(() => {
-						window.ipc_bridge.load_file(fdata['savefile'], manual_game_dir, handle_file_load);
-					}, 500);
+					reload_current_save(fdata, 500);
 				} else {
 					set_text('statustext', 'Failed to restore backup: ' + result.error);
 				}
@@ -745,7 +807,12 @@ async function load_backup_ui(fdata) {
 		clear_btn.textContent = 'Clear all backups';
 		clear_btn.classList.add('palette-button');
 		clear_btn.onclick = async (event) => {
-			if (confirm(`Delete all ${backups.length} backup(s)? This cannot be undone.`)) {
+			if (
+				await app_confirm(
+					`Delete all ${backups.length} backup(s)?`,
+					'This cannot be undone.'
+				)
+			) {
 				set_text('statustext', 'Clearing backups...');
 				const result = await window.ipc_bridge.clear_backups(fdata['savefile']);
 
@@ -764,7 +831,9 @@ async function load_backup_ui(fdata) {
 		backup_container.appendChild(clear_btn);
 		backup_ui.appendChild(backup_container);
 	} catch (err) {
-		console.error('Error loading backup UI:', err);
+		if (generation === backup_ui_generation) {
+			console.error('Error loading backup UI:', err);
+		}
 	}
 }
 
@@ -827,18 +896,36 @@ function handle_save(outfile, json, rm_root, sections, fdata) {
  *   'json_txt' => Original JSON text from the save file
  *   'object'   => Parsed JSON object
  */
+function clear_editor_dom() {
+	if (document.activeElement instanceof HTMLElement) {
+		document.activeElement.blur();
+	}
+	const content_div = document.getElementById('content');
+	const palette_div = document.getElementById('palette');
+	content_div.innerHTML = '';
+	palette_div.innerHTML = '';
+}
+
 function handle_file_load(filename, context_obj) {
-	set_text('status', 'Handling file load for ' + filename);
+	set_text('statustext', 'Handling file load for ' + filename);
 
 	if (!context_obj) {
 		set_text('statustext', 'File load cancelled');
+		restore_window_focus();
 		return;
 	}
 	if (context_obj.error) {
 		set_text('statustext', 'Error loading file: ' + context_obj.error);
 		console.error('File load failed for ' + filename + ':', context_obj.error);
+		restore_window_focus();
 		return;
 	}
+
+	const backup_ui = document.getElementById('backup_ui');
+	if (backup_ui) {
+		backup_ui.innerHTML = '';
+	}
+
 	let fdata = {};
 	let json_txt = context_obj['json_txt'];
 	fdata['filename'] = filename;
@@ -850,17 +937,17 @@ function handle_file_load(filename, context_obj) {
 	let sections = build_sections(fdata['object'], context_obj);
 
 	// Clear previous content and palette to prevent memory leaks
-	const content_div = document.getElementById('content');
-	const palette_div = document.getElementById('palette');
-	content_div.innerHTML = '';
-	palette_div.innerHTML = '';
+	clear_editor_dom();
+	++backup_ui_generation;
 
+	const content_div = document.getElementById('content');
 	sections.forEach((section) => {
 		content_div.appendChild(section.create_DOM());
 	});
 
 	build_palette(sections, fdata);
 	hide_dropzone();
+	restore_window_focus();
 }
 
 /*
