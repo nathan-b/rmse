@@ -149,6 +149,34 @@ ipcMain.handle('basename', async (event, file_path) => {
 	return path.basename(file_path);
 });
 
+ipcMain.handle('confirm_dialog', async (event, { message, detail, title }) => {
+	const win = BrowserWindow.fromWebContents(event.sender) || getWindow();
+	const { response } = await dialog.showMessageBox(win, {
+		type: 'warning',
+		buttons: ['Continue', 'Cancel'],
+		defaultId: 1,
+		cancelId: 1,
+		noLink: true,
+		message,
+		detail: detail || undefined,
+		title: title || 'RPGMaker Save Editor'
+	});
+	return response === 0;
+});
+
+ipcMain.handle('focus_window', async (event) => {
+	const win = BrowserWindow.fromWebContents(event.sender) || getWindow();
+	if (!win) {
+		return;
+	}
+	if (win.isMinimized()) {
+		win.restore();
+	}
+	win.show();
+	win.focus();
+	win.webContents.focus();
+});
+
 // Entrypoint
 app.whenReady().then(() => {
 	createWindow();

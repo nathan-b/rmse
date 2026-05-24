@@ -18,9 +18,15 @@ contextBridge.exposeInMainWorld('ipc_bridge', {
 	},
 	open_file: (manual_game_dir, callback) => {
 		ipcRenderer.invoke('open_file', manual_game_dir).then((result) => {
+			if (!result) {
+				callback('', null);
+				return;
+			}
 			callback(path_basename(result.savefile), result);
 		});
 	},
+	confirm_dialog: (options) => ipcRenderer.invoke('confirm_dialog', options),
+	focus_window: () => ipcRenderer.invoke('focus_window'),
 	select_game_dir: (callback) => {
 		ipcRenderer.invoke('select_game_dir').then((result) => {
 			callback(result);
