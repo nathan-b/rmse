@@ -129,6 +129,27 @@ div.section-hidden {
 	display: none;
 }
 
+div.section-filter {
+	padding: 0.25em 0 0.5em 1.5em;
+}
+
+input.section-filter-input {
+	width: 100%;
+	max-width: 400px;
+	line-height: 2em;
+}
+
+span.section-filter-status {
+	display: block;
+	font-size: 0.9em;
+	opacity: 0.8;
+	margin-top: 0.25em;
+}
+
+div.item.item-hidden {
+	display: none;
+}
+
 div.character-content {
 	grid-template-columns: repeat(auto-fit, 175px);
 	grid-row-gap: 0px;

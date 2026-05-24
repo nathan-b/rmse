@@ -47,7 +47,22 @@ class value_item {
 		parent.appendChild(label);
 		parent.appendChild(input);
 
+		this.dom_elem = parent;
 		return parent;
+	}
+
+	matchesFilter(query) {
+		if (!query) {
+			return true;
+		}
+		const haystack = [
+			this.labeltext,
+			String(this.field),
+			String(this.curr_val)
+		]
+			.join(' ')
+			.toLowerCase();
+		return haystack.includes(query);
 	}
 
 	update_value() {
@@ -265,6 +280,7 @@ class section {
 	constructor(name) {
 		this.name = name;
 		this.items = [];
+		this.filterable = false;
 	}
 
 	add_item(item) {
@@ -282,26 +298,55 @@ class section {
 		header.classList.add('section-header');
 		header.classList.add('expanded');
 		header.textContent = this.name;
+		let filter_div = null;
 		let section_content = document.createElement('div');
 		section_content.classList.add('section-content');
 		let extras_div = document.createElement('div');
 
+		if (this.filterable) {
+			filter_div = document.createElement('div');
+			filter_div.classList.add('section-filter');
+
+			let filter_input = document.createElement('input');
+			filter_input.setAttribute('type', 'search');
+			filter_input.classList.add('section-filter-input');
+			filter_input.placeholder = 'Filter variables…';
+			filter_div.appendChild(filter_input);
+
+			let filter_status = document.createElement('span');
+			filter_status.classList.add('section-filter-status');
+			filter_status.classList.add('section-hidden');
+			filter_div.appendChild(filter_status);
+
+			this.filter_input = filter_input;
+			this.filter_status = filter_status;
+
+			filter_input.addEventListener('input', () => {
+				this.applyFilter();
+			});
+		}
+
+		const collapsible = filter_div
+			? [filter_div, section_content, extras_div]
+			: [section_content, extras_div];
+
 		// Enable expand / collapse behavior
-		header.onclick = function (event) {
+		header.onclick = (event) => {
 			if (event.target.classList.contains('expanded')) {
 				event.target.classList.remove('expanded');
 				event.target.classList.add('collapsed');
-				section_content.classList.add('section-hidden');
-				extras_div.classList.add('section-hidden');
+				collapsible.forEach((el) => el.classList.add('section-hidden'));
 			} else {
 				event.target.classList.add('expanded');
 				event.target.classList.remove('collapsed');
-				section_content.classList.remove('section-hidden');
-				extras_div.classList.remove('section-hidden');
+				collapsible.forEach((el) => el.classList.remove('section-hidden'));
 			}
 		};
 
 		section_div.appendChild(header);
+		if (filter_div) {
+			section_div.appendChild(filter_div);
+		}
 		section_div.appendChild(section_content);
 		this.items.forEach((item) => {
 			section_content.appendChild(item.create_DOM());
@@ -362,6 +407,32 @@ class section {
 		this.items.forEach((item) => {
 			item.reset_value();
 		});
+	}
+
+	applyFilter() {
+		if (!this.filter_input) {
+			return;
+		}
+		const query = this.filter_input.value.trim().toLowerCase();
+		let visible = 0;
+		this.items.forEach((item) => {
+			const matches = item.matchesFilter(query);
+			if (matches) {
+				visible++;
+			}
+			if (item.dom_elem) {
+				item.dom_elem.classList.toggle('item-hidden', !matches);
+			}
+		});
+		if (this.filter_status) {
+			if (query) {
+				this.filter_status.textContent = `Showing ${visible} of ${this.items.length}`;
+				this.filter_status.classList.remove('section-hidden');
+			} else {
+				this.filter_status.textContent = '';
+				this.filter_status.classList.add('section-hidden');
+			}
+		}
 	}
 }
 
@@ -492,6 +563,9 @@ function load_section(name, json_parent, section_arr, ctx, extras) {
  */
 function load_array_section(name, json_parent, section_arr, ctx) {
 	let section_obj = new section(name);
+	if (name === 'Variables') {
+		section_obj.filterable = true;
+	}
 
 	if (json_parent.length > 0) {
 		json_parent.forEach((value, idx) => {
