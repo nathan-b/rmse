@@ -51,14 +51,14 @@ class value_item {
 		return parent;
 	}
 
-	matchesFilter(query) {
+	matches_filter(query) {
 		if (!query) {
 			return true;
 		}
 		const haystack = [
 			this.labeltext,
 			String(this.field),
-			String(this.curr_val)
+			String(this.input_elem?.value ?? this.curr_val)
 		]
 			.join(' ')
 			.toLowerCase();
@@ -416,7 +416,7 @@ class section {
 		const query = this.filter_input.value.trim().toLowerCase();
 		let visible = 0;
 		this.items.forEach((item) => {
-			const matches = item.matchesFilter(query);
+			const matches = item.matches_filter(query);
 			if (matches) {
 				visible++;
 			}
