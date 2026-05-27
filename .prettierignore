@@ -17,3 +17,6 @@ Thumbs.db
 
 # Package lock files (generated)
 package-lock.json
+
+# Test fixtures (binary/generated files that should not be reformatted)
+tests/fixtures/

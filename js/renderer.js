@@ -6,10 +6,6 @@ let backup_ui_generation = 0;
 
 // Set the text of the given element
 function set_text(selector, text) {
-	// Legacy callers use "status" for the status line inside #statustext
-	if (selector === 'status') {
-		selector = 'statustext';
-	}
 	const element = document.getElementById(selector);
 	if (element) element.innerText = text;
 	else console.log('Bad did happen');
@@ -327,7 +323,7 @@ class section {
 			this.filter_status = filter_status;
 
 			filter_input.addEventListener('input', () => {
-				this.applyFilter();
+				this.apply_filter();
 			});
 		}
 
@@ -414,7 +410,7 @@ class section {
 		});
 	}
 
-	applyFilter() {
+	apply_filter() {
 		if (!this.filter_input) {
 			return;
 		}
@@ -466,10 +462,7 @@ function exp_for_level(level, expParams) {
 	const acc_a = expParams[2];
 	const acc_b = expParams[3];
 	return Math.round(
-		basis *
-			Math.pow(level - 1, 0.9 + acc_a / 250) *
-			level *
-			(level + 1) /
+		(basis * Math.pow(level - 1, 0.9 + acc_a / 250) * level * (level + 1)) /
 			(6 + Math.pow(level, 2) / 50 / acc_b) +
 			(level - 1) * extra
 	);
@@ -920,15 +913,15 @@ function format_size(bytes) {
 function dump_json(obj, rm_root) {
 	window.ipc_bridge.dump_json(obj, rm_root, (status) => {
 		if (status.length > 0) {
-			set_text('status', 'Dumped raw JSON to ' + status);
+			set_text('statustext', 'Dumped raw JSON to ' + status);
 		} else {
-			set_text('status', 'Could not dump raw JSON!');
+			set_text('statustext', 'Could not dump raw JSON!');
 		}
 	});
 }
 
 function handle_save(outfile, json, rm_root, sections, fdata) {
-	set_text('status', 'Saving ' + outfile);
+	set_text('statustext', 'Saving ' + outfile);
 	// This will update the json object to contain the new values
 	sections.forEach((section) => {
 		section.update_values();
@@ -937,7 +930,7 @@ function handle_save(outfile, json, rm_root, sections, fdata) {
 	// Now save the json
 	window.ipc_bridge.save_file(outfile, JSON.stringify(json), rm_root, async (status) => {
 		if (status.length > 0) {
-			set_text('status', 'Saved ' + status);
+			set_text('statustext', 'Saved ' + status);
 			// Refresh backup UI immediately after save
 			// Update fdata with the saved file path (in case of "Save as...")
 			const saved_fdata = {
@@ -947,7 +940,7 @@ function handle_save(outfile, json, rm_root, sections, fdata) {
 			};
 			load_backup_ui(saved_fdata);
 		} else {
-			set_text('status', 'Error saving ' + outfile);
+			set_text('statustext', 'Error saving ' + outfile);
 		}
 	});
 }
@@ -1062,7 +1055,7 @@ function drop_handler(ev) {
 				path: window.ipc_bridge.path_for_file(ev.dataTransfer.items[i].getAsFile())
 			};
 
-			set_text('status', 'Loading file ' + file.path);
+			set_text('statustext', 'Loading file ' + file.path);
 			window.ipc_bridge.load_file(file.path, manual_game_dir, handle_file_load);
 		}
 	}

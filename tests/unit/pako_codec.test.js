@@ -116,6 +116,51 @@ describe('pako_codec format detection', () => {
 		});
 	});
 
+	describe('save format encoding', () => {
+		test('should write .rmmzsave files as MZ UTF-8 (not MV binary) even without a prior load', async () => {
+			// Regression test for: save() built a fresh codec with use_utf8_format=false,
+			// writing .rmmzsave files in MV binary format instead of MZ UTF-8 format.
+			// Our loader's MZ→MV fallback masked this in round-trip tests, but the game
+			// itself cannot read an MV-binary-encoded .rmmzsave.
+			const test_file = path.join(save_dir, 'save_encoding_check.rmmzsave');
+			const test_data = { party: { _gold: 7777, _steps: 333 } };
+			const json_str = JSON.stringify(test_data);
+
+			// Save directly — no prior load(), so no codec state carried over from decode
+			await rm_loader.save(test_file, json_str, test_game_dir);
+
+			// Read back using the MZ decode path: read as UTF-8, convert each character
+			// back to its byte value (reversing Node.js's UTF-8 encoding), then inflate.
+			// If the file was incorrectly written as raw MV binary, the UTF-8 re-encoding
+			// would produce replacement chars (U+FFFD) for invalid byte sequences, and
+			// the inflate would fail with "unknown compression method".
+			const binary_str = fs.readFileSync(test_file, { encoding: 'utf-8' });
+			const bytes = new Uint8Array(binary_str.length);
+			for (let i = 0; i < binary_str.length; i++) bytes[i] = binary_str.charCodeAt(i);
+			const inflated = pako.inflate(bytes, { to: 'string' });
+			const result = JSON.parse(inflated);
+
+			expect(result.party._gold).toBe(7777);
+			expect(result.party._steps).toBe(333);
+		});
+
+		test('should write .rpgsave files as MV binary (not MZ UTF-8)', async () => {
+			const test_file = path.join(save_dir, 'save_encoding_check.rpgsave');
+			const test_data = { party: { _gold: 8888, _steps: 444 } };
+			const json_str = JSON.stringify(test_data);
+
+			await rm_loader.save(test_file, json_str, test_game_dir);
+
+			// MV binary path: raw Buffer → pako inflate
+			const raw_buffer = fs.readFileSync(test_file);
+			const inflated = pako.inflate(raw_buffer, { to: 'string' });
+			const result = JSON.parse(inflated);
+
+			expect(result.party._gold).toBe(8888);
+			expect(result.party._steps).toBe(444);
+		});
+	});
+
 	describe('format preservation on round-trip save/load', () => {
 		test('should preserve MZ UTF-8 format when saving', async () => {
 			const fixture = path.join(fixtures_dir, 'mz_utf8_format.rmmzsave');
@@ -187,5 +232,4 @@ describe('pako_codec format detection', () => {
 			expect(data.party._gold).toBe(1000);
 		});
 	});
-
 });

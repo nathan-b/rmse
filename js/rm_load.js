@@ -59,10 +59,17 @@ class pako_codec {
 	}
 
 	rmmz_decode(savefile_path) {
-		// RPG Maker MZ writes compressed binary data as UTF-8 string (for some reason)
+		// RPG Maker MZ uses pako.deflate({to:'string'}) and writes the result without
+		// specifying encoding, causing Node.js to UTF-8-encode the binary string.
+		// We reverse this: read as UTF-8 to recover the binary string, then convert
+		// each character back to its byte value for pako v2 (which requires typed input).
 		try {
-			const zipdata_utf8 = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
-			const json = this.pako.inflate(zipdata_utf8, { to: 'string' });
+			const binary_str = fs.readFileSync(savefile_path, { encoding: 'utf-8' });
+			const bytes = new Uint8Array(binary_str.length);
+			for (let i = 0; i < binary_str.length; i++) {
+				bytes[i] = binary_str.charCodeAt(i);
+			}
+			const json = this.pako.inflate(bytes, { to: 'string' });
 			this.use_utf8_format = true;
 			return json;
 		} catch (err) {
@@ -88,18 +95,22 @@ class pako_codec {
 	}
 
 	encode(json_str) {
-		const compressed = this.pako.deflate(json_str, {
-			to: 'string',
-			level: 1
-		});
+		// pako v2 deflate() returns a Uint8Array regardless of the {to:'string'} option.
+		const compressed = this.pako.deflate(json_str, { level: 1 });
 
-		// If the file was loaded using UTF-8 format (MZ), keep it in that format
-		// Otherwise return binary Buffer (MV)
+		// If the file was loaded using UTF-8 format (MZ), keep it in that format.
+		// MZ format: simulate pako v1 deflate({to:'string'}) behaviour — convert bytes
+		// to a binary string so that Node.js UTF-8-encodes it on write, matching the
+		// format RPG Maker MZ expects to read back.
 		if (this.use_utf8_format) {
-			return compressed; // Return as string for UTF-8 encoding
+			let binary_str = '';
+			for (let i = 0; i < compressed.length; i++) {
+				binary_str += String.fromCharCode(compressed[i]);
+			}
+			return binary_str;
 		} else {
-			// Convert string to Buffer for binary writing
-			return Buffer.from(compressed, 'binary');
+			// MV format: write raw binary data
+			return Buffer.from(compressed);
 		}
 	}
 }
