@@ -57,7 +57,7 @@ jobs:
           name: RPGMaker-Save-Editor-win32-x64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
           path: dist
 
-  release-macos:
+  release-macos-x64-and-arm64:
     runs-on: macos-latest
     steps:
       - name: Checkout
