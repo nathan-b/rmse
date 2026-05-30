@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build-linux-x64:
+  release-linux-x64:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,7 +32,7 @@ jobs:
           name: RPGMaker-Save-Editor-linux-x64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
           path: dist
 
-  build-windows-x64:
+  release-windows-x64:
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -57,7 +57,7 @@ jobs:
           name: RPGMaker-Save-Editor-win32-x64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
           path: dist
 
-  build-macos:
+  release-macos:
     runs-on: macos-latest
     steps:
       - name: Checkout
