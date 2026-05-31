@@ -1,10 +1,7 @@
 name: Automatic Build
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   release-linux-x64:
@@ -24,7 +21,6 @@ jobs:
 
       - name: Build Electron app (Linux)
         run: |
-          npm i -D electron-builder
           npx electron-packager . RPGMaker-Save-Editor --platform=linux --arch=x64 --out=dist
 
       - uses: actions/upload-artifact@v4
@@ -49,7 +45,6 @@ jobs:
 
       - name: Build Electron app (Windows)
         run: |
-          npm i -D electron-builder
           npx electron-packager . RPGMaker-Save-Editor --platform=win32 --arch=x64 --out=dist
 
       - uses: actions/upload-artifact@v4
@@ -74,7 +69,6 @@ jobs:
   
       - name: Build Electron app (macOS x64)
         run: |
-          npm i -D electron-builder
           npx electron-packager . RPGMaker-Save-Editor --platform=darwin --arch=x64 --out=dist-x64
   
       - name: Build Electron app (macOS arm64)
