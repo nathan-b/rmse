@@ -1,0 +1,86 @@
+name: Automatic Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Build Electron app (Linux)
+        run: |
+          npx electron-packager . RPGMaker-Save-Editor --platform=linux --arch=x64 --out=dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RPGMaker-Save-Editor-linux-x64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
+          path: dist
+
+  release-windows-x64:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm i
+
+      - name: Build Electron app (Windows)
+        run: |
+          npx electron-packager . RPGMaker-Save-Editor --platform=win32 --arch=x64 --out=dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RPGMaker-Save-Editor-win32-x64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
+          path: dist
+
+  release-macos-x64-and-arm64:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm i
+  
+      - name: Build Electron app (macOS x64)
+        run: |
+          npx electron-packager . RPGMaker-Save-Editor --platform=darwin --arch=x64 --out=dist-x64
+  
+      - name: Build Electron app (macOS arm64)
+        run: |
+          npx electron-packager . RPGMaker-Save-Editor --platform=darwin --arch=arm64 --out=dist-arm64
+  
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RPGMaker-Save-Editor-darwin-x64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
+          path: dist-x64
+  
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RPGMaker-Save-Editor-darwin-arm64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{github.sha}}
+          path: dist-arm64
